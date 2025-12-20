@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import ChatInterface from './components/ChatInterface';
 import { Sunset, PlusCircle, Key, Compass } from 'lucide-react';
@@ -12,16 +11,20 @@ const App: React.FC = () => {
       let envKey = false;
       try {
         // @ts-ignore
-        envKey = !!(process.env.API_KEY);
+        envKey = !!(typeof process !== 'undefined' && process.env?.API_KEY);
       } catch (e) {
         envKey = false;
       }
 
       const wasConnected = localStorage.getItem('noosa_concierge_connected') === 'true';
       
-      if ((window as any).aistudio) {
-        const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-        setHasApiKey(hasKey || wasConnected || envKey);
+      if (window.aistudio) {
+        try {
+          const hasKey = await window.aistudio.hasSelectedApiKey();
+          setHasApiKey(hasKey || wasConnected || envKey);
+        } catch (err) {
+          setHasApiKey(wasConnected || envKey);
+        }
       } else {
         setHasApiKey(envKey || wasConnected);
       }
@@ -30,9 +33,9 @@ const App: React.FC = () => {
   }, []);
 
   const handleSelectKey = async () => {
-    if ((window as any).aistudio) {
+    if (window.aistudio) {
       try {
-        await (window as any).aistudio.openSelectKey();
+        await window.aistudio.openSelectKey();
         localStorage.setItem('noosa_concierge_connected', 'true');
         setHasApiKey(true);
       } catch (err) {
