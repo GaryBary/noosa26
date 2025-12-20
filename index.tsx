@@ -2,20 +2,13 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 
-/**
- * Entry Point for Noosa Navigator
- * The system automatically imports this file. 
- */
-const mount = () => {
-  console.log('Noosa Navigator: Initializing Coastal Guide...');
-  const container = document.getElementById('root');
-  
-  if (!container) {
-    console.error('Fatal: Root container not found');
-    return;
-  }
+console.log('Noosa Navigator: Script Loaded');
 
-  // Clear existing static loading UI
+const init = () => {
+  const container = document.getElementById('root');
+  if (!container) return;
+
+  // Clear static loading UI
   container.innerHTML = '';
 
   try {
@@ -25,15 +18,14 @@ const mount = () => {
         <App />
       </React.StrictMode>
     );
-    console.log('Noosa Navigator: Successfully mounted');
-  } catch (error) {
-    console.error('Noosa Navigator: Mount failed', error);
+    console.log('Noosa Navigator: Render Complete');
+  } catch (err) {
+    console.error('Noosa Navigator: Render Error', err);
   }
 };
 
-// Ensure we only mount once the DOM is ready
 if (document.readyState === 'complete' || document.readyState === 'interactive') {
-  mount();
+  init();
 } else {
-  document.addEventListener('DOMContentLoaded', mount);
+  document.addEventListener('DOMContentLoaded', init);
 }

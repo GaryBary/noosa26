@@ -12,29 +12,23 @@
     <title>Noosa Navigator | Holiday Concierge</title>
     
     <script>
-      // Early Polyfill for process.env
+      // 1. Establish process polyfill immediately
       window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
 
-      // Detailed error reporting to the UI for debugging "stuck" screens
-      function reportInitError(message, details = '') {
-        console.error('INIT_ERROR:', message, details);
+      // 2. Global error catching for initialization failures
+      window.onerror = function(msg, url, line, col, error) {
         const root = document.getElementById('root');
-        if (root) {
+        if (root && root.innerHTML.includes('Establishing')) {
           root.innerHTML = `
-            <div style="padding: 40px; text-align: center; font-family: sans-serif; color: #334155; background: #fdfcfb; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-              <h1 style="color: #ef4444; font-size: 1.2rem; margin-bottom: 8px;">Concierge Offline</h1>
-              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 24px; max-width: 300px;">${message}</p>
-              <div style="font-size: 10px; color: #94a3b8; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: left; max-width: 90%; overflow-x: auto; font-family: monospace;">
-                ${details}
-              </div>
-              <button onclick="location.reload()" style="padding: 10px 24px; background: #0f172a; color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Reconnect</button>
+            <div style="padding: 40px; text-align: center; font-family: sans-serif; color: #475569;">
+              <h2 style="color: #ef4444; font-size: 1.25rem; margin-bottom: 8px;">Initialization Error</h2>
+              <p style="font-size: 0.875rem; color: #64748b;">${msg}</p>
+              <button onclick="location.reload()" style="margin-top: 20px; padding: 8px 20px; background: #0f172a; color: white; border: none; border-radius: 99px; cursor: pointer;">Retry Connection</button>
             </div>
           `;
         }
-      }
-
-      window.onerror = (msg, url, line, col, err) => reportInitError('A script error occurred during startup.', `${msg}\nLocation: ${url}:${line}:${col}`);
-      window.onunhandledrejection = (event) => reportInitError('Module loading failed.', event.reason?.message || 'The browser could not load a required resource. This is often caused by 404 errors in the network tab.');
+        return false;
+      };
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -70,7 +64,6 @@
         <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Establishing Connection...</p>
       </div>
     </div>
-    <!-- Explicitly load the main application module -->
     <script type="module" src="./index.tsx"></script>
   </body>
 </html>
