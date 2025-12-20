@@ -17,13 +17,14 @@
 
       // 2. Global error catching for initialization failures
       window.onerror = function(msg, url, line, col, error) {
+        console.error("Global Error:", msg);
         const root = document.getElementById('root');
-        if (root && root.innerHTML.includes('Establishing')) {
+        if (root) {
           root.innerHTML = `
             <div style="padding: 40px; text-align: center; font-family: sans-serif; color: #475569;">
-              <h2 style="color: #ef4444; font-size: 1.25rem; margin-bottom: 8px;">Initialization Error</h2>
+              <h2 style="color: #ef4444; font-size: 1.25rem; margin-bottom: 8px;">Concierge Offline</h2>
               <p style="font-size: 0.875rem; color: #64748b;">${msg}</p>
-              <button onclick="location.reload()" style="margin-top: 20px; padding: 8px 20px; background: #0f172a; color: white; border: none; border-radius: 99px; cursor: pointer;">Retry Connection</button>
+              <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #0f172a; color: white; border: none; border-radius: 99px; cursor: pointer;">Retry Connection</button>
             </div>
           `;
         }

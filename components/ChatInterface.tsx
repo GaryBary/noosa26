@@ -8,10 +8,11 @@ import { SUGGESTED_QUESTIONS } from '../constants.ts';
 import { decodeBase64, decodeAudioData, recordAudio } from '../utils/audio.ts';
 
 interface ChatInterfaceProps {
+  locality: string;
   onApiKeyError?: () => void;
 }
 
-const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
+const ChatInterface: React.FC<ChatInterfaceProps> = ({ locality, onApiKeyError }) => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: 'welcome',
@@ -38,7 +39,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isLoading, isRecording, isTranscribing]);
+  }, [messages, isLoading]);
 
   useEffect(() => {
     return () => {
@@ -103,13 +104,13 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
       timestamp: Date.now() 
     };
     
-    const updatedHistory = [...messages, userMsg];
-    setMessages(updatedHistory);
+    const historyForService = [...messages];
+    setMessages(prev => [...prev, userMsg]);
     setInputText('');
     setIsLoading(true);
 
     try {
-      const response = await sendMessageToGemini(text, updatedHistory);
+      const response = await sendMessageToGemini(text, historyForService, locality);
       const botMsg: Message = { 
         id: (Date.now() + 1).toString(), 
         role: Role.MODEL, 
@@ -125,15 +126,17 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
       }
     } catch (e: any) {
       console.error("Chat Error:", e);
-      onApiKeyError?.();
+      if (e.message === "API_KEY_ERROR") {
+        onApiKeyError?.();
+      }
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] max-w-4xl mx-auto relative px-4">
-      <div className="flex-1 overflow-y-auto pt-8 pb-48 space-y-4 no-scrollbar">
+    <div className="flex flex-col h-full max-w-4xl mx-auto relative px-4">
+      <div className="flex-1 overflow-y-auto pt-8 pb-32 space-y-4 no-scrollbar">
         {messages.map((msg) => (
           <ChatBubble key={msg.id} message={msg} />
         ))}
@@ -155,20 +158,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
       </div>
 
       <div className="absolute bottom-6 left-0 right-0 px-4 space-y-4">
-        {messages.length < 3 && !isLoading && !isRecording && (
-          <div className="grid grid-cols-2 md:flex md:flex-row md:justify-center gap-2 pb-2 px-1">
-            {SUGGESTED_QUESTIONS.map((q, idx) => (
-              <button
-                key={idx}
-                onClick={() => handleSendMessage(q)}
-                className="flex items-center justify-center px-4 py-3 glass border-white/50 text-slate-500 text-[9px] font-bold rounded-2xl hover:bg-white hover:text-sky-600 transition-all shadow-sm uppercase tracking-[0.2em] text-center leading-tight active:scale-95 min-h-[48px]"
-              >
-                {q}
-              </button>
-            ))}
-          </div>
-        )}
-
         <div className={`glass shadow-2xl rounded-[2.5rem] p-2 transition-all duration-500 border-white/80 ${
           isRecording ? 'bg-sky-50/90 ring-4 ring-sky-100/50' : ''
         }`}>
@@ -198,7 +187,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
                     ref={inputRef}
                     type="text"
                     className={`w-full bg-transparent px-4 py-3 focus:outline-none text-slate-800 placeholder-slate-400 font-medium ${isTranscribing ? 'opacity-40' : ''}`}
-                    placeholder={isTranscribing ? "Transcribing voice..." : "Ask your concierge..."}
+                    placeholder={isTranscribing ? "Transcribing voice..." : `Ask about ${locality}...`}
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(inputText)}

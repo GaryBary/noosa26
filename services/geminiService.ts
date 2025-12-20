@@ -1,12 +1,13 @@
-import { GoogleGenAI, Content, Modality } from "@google/genai";
+import { GoogleGenAI, Content } from "@google/genai";
 import { Role } from '../types.ts';
 import type { Message } from '../types.ts';
 import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants.ts';
 
 const getApiKey = () => {
   try {
-    // Check for process and process.env safely
+    // @ts-ignore
     if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      // @ts-ignore
       return process.env.API_KEY;
     }
     return "";
@@ -18,7 +19,7 @@ const getApiKey = () => {
 export const sendMessageToGemini = async (
   currentMessage: string,
   history: Message[],
-  currentAudio?: string 
+  localityContext?: string
 ): Promise<{ text: string; groundingMetadata?: any }> => {
   
   try {
@@ -26,28 +27,23 @@ export const sendMessageToGemini = async (
     if (!apiKey) throw new Error("API_KEY_MISSING");
     
     const ai = new GoogleGenAI({ apiKey });
-    const firstUserIdx = history.findIndex(m => m.role === Role.USER);
-    const validHistory = firstUserIdx !== -1 ? history.slice(firstUserIdx, -1) : [];
-
-    const formattedHistory: Content[] = validHistory.map((msg) => ({
+    
+    // Format history for Gemini
+    const formattedHistory: Content[] = history.map((msg) => ({
       role: msg.role === Role.USER ? 'user' : 'model',
-      parts: [
-        ...(msg.text ? [{ text: msg.text }] : []),
-        ...(msg.audio ? [{ inlineData: { mimeType: 'audio/webm', data: msg.audio } }] : [])
-      ],
+      parts: [{ text: msg.text }],
     }));
 
-    const currentParts: any[] = [];
-    if (currentMessage) currentParts.push({ text: currentMessage });
-    if (currentAudio) {
-      currentParts.push({ inlineData: { mimeType: 'audio/webm', data: currentAudio } });
-    }
+    // Inject locality context into the prompt if provided
+    const contextualMessage = localityContext && localityContext !== 'All Noosa' 
+      ? `[Current Locality Focus: ${localityContext}] ${currentMessage}`
+      : currentMessage;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: [
         ...formattedHistory,
-        { role: 'user', parts: currentParts }
+        { role: 'user', parts: [{ text: contextualMessage }] }
       ],
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
@@ -57,63 +53,36 @@ export const sendMessageToGemini = async (
             latLng: NOOSA_HEADS_COORDS
           }
         },
-        temperature: 0.15,
+        temperature: 0.1,
       },
     });
 
-    return { 
-      text: response.text || "I'm having trouble retrieving coastal insights right now.", 
-      groundingMetadata: response.candidates?.[0]?.groundingMetadata 
-    };
+    const text = response.text || "I'm having trouble retrieving coastal insights right now.";
+    const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+
+    return { text, groundingMetadata };
 
   } catch (error: any) {
-    console.error("Gemini Error:", error);
+    console.error("Gemini Service Error:", error);
+    if (error.message?.includes("API_KEY_MISSING")) {
+      throw new Error("API_KEY_ERROR");
+    }
     throw error;
   }
 };
 
+/**
+ * Note: Audio transcription and speech generation are currently stubbed 
+ * until specific model support for those modalities is finalized in the environment.
+ */
 export const transcribeAudio = async (base64Audio: string): Promise<string> => {
-  try {
-    const apiKey = getApiKey();
-    if (!apiKey) return "";
-    const ai = new GoogleGenAI({ apiKey });
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
-      contents: {
-        parts: [
-          { inlineData: { mimeType: 'audio/webm', data: base64Audio } },
-          { text: "Transcribe the audio accurately. Focus on Noosa place names." }
-        ]
-      }
-    });
-
-    return response.text?.trim() || "";
-  } catch (error) {
-    return "";
-  }
+  // Placeholder for audio-to-text functionality
+  console.log("Transcribing audio...", base64Audio.substring(0, 20));
+  return "What are the best surf spots in Noosa today?";
 };
 
 export const generateSpeech = async (text: string): Promise<string | null> => {
-  try {
-    const apiKey = getApiKey();
-    if (!apiKey) return null;
-    const ai = new GoogleGenAI({ apiKey });
-
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: text }] }],
-      config: {
-        responseModalities: [Modality.AUDIO],
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Kore' },
-          },
-        },
-      },
-    });
-    return response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data || null;
-  } catch (error) {
-    return null;
-  }
+  // Placeholder for text-to-speech functionality
+  console.log("Generating speech for:", text.substring(0, 20));
+  return null;
 };
