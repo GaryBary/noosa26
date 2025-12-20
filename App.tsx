@@ -7,6 +7,7 @@ const App: React.FC = () => {
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
 
   useEffect(() => {
+    console.log('App: Checking Concierge Auth Status...');
     const checkKeyStatus = async () => {
       let envKey = false;
       try {
@@ -52,7 +53,7 @@ const App: React.FC = () => {
       <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-sky-100 border-t-sky-600 rounded-full animate-spin"></div>
-          <span className="mt-6 text-slate-400 font-bold uppercase tracking-[0.3em] text-[9px]">Noosa Navigator...</span>
+          <span className="mt-6 text-slate-400 font-bold uppercase tracking-[0.3em] text-[9px]">Loading Guide...</span>
         </div>
       </div>
     );

@@ -11,33 +11,35 @@
     
     <title>Noosa Navigator | Holiday Concierge</title>
     
-    <!-- Robust Polyfill for process.env -->
     <script>
-      window.process = { 
-        env: { 
-          NODE_ENV: 'production',
-          API_KEY: '' 
-        } 
+      // 1. Polyfill process.env
+      window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
+
+      // 2. Catch Standard Errors
+      window.onerror = function(msg, url, lineNo, columnNo, error) {
+        console.error('Window Error:', msg, error);
+        reportInitError(msg);
+        return false;
       };
 
-      // Error reporting during initialization
-      window.addEventListener('error', function(event) {
+      // 3. Catch Module/Promise Errors (Crucial for ESM load failures)
+      window.onunhandledrejection = function(event) {
+        console.error('Promise Rejection:', event.reason);
+        reportInitError(event.reason?.message || 'Module load failure');
+      };
+
+      function reportInitError(message) {
         const root = document.getElementById('root');
-        if (root && root.innerHTML.includes('Establishing Connection')) {
+        if (root && (root.innerHTML.includes('Establishing') || root.innerHTML === '')) {
           root.innerHTML = `
-            <div style="padding: 40px; text-align: center; font-family: 'Outfit', sans-serif; color: #334155; background: #fdfcfb; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-              <h1 style="color: #ef4444; font-size: 1.5rem; margin-bottom: 12px; font-weight: 700;">Concierge Offline</h1>
-              <p style="font-size: 0.9rem; margin-bottom: 20px; color: #64748b;">A connection error occurred while loading the coastal guides.</p>
-              <div style="background: #f1f5f9; padding: 16px; border-radius: 12px; font-family: monospace; font-size: 11px; text-align: left; overflow: auto; max-width: 80%; border: 1px solid #e2e8f0; color: #475569;">
-                ${event.message}
-              </div>
-              <button onclick="location.reload()" style="margin-top: 24px; padding: 12px 32px; background: #0f172a; color: white; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
-                Restart Navigator
-              </button>
+            <div style="padding: 40px; text-align: center; font-family: sans-serif; color: #334155; background: #fdfcfb; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <h1 style="color: #ef4444; font-size: 1.2rem; margin-bottom: 8px;">Initialization Failed</h1>
+              <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 24px; max-width: 300px;">${message}</p>
+              <button onclick="location.reload()" style="padding: 10px 24px; background: #0f172a; color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer;">Retry Connection</button>
             </div>
           `;
         }
-      });
+      }
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -58,47 +60,14 @@
 </script>
 
     <style>
-      :root {
-        --noosa-blue: #0ea5e9;
-        --noosa-navy: #0f172a;
-        --noosa-sand: #fdfcfb;
-      }
-      body {
-        font-family: 'Outfit', sans-serif;
-        background-color: var(--noosa-sand);
-        color: var(--noosa-navy);
-        margin: 0;
-        padding: 0;
-        overflow-x: hidden;
-      }
-      .noosa-gradient {
-        background: linear-gradient(135deg, #fdfcfb 0%, #f0f9ff 100%);
-      }
-      .glass {
-        background: rgba(255, 255, 255, 0.75);
-        backdrop-filter: blur(16px);
-        -webkit-backdrop-filter: blur(16px);
-        border: 1px solid rgba(255, 255, 255, 0.4);
-      }
-      .mesh-bg {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        z-index: -1;
-        background: radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.08) 0, transparent 50%),
-                    radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.04) 0, transparent 50%);
-      }
-      #root {
-        min-height: 100vh;
-        display: flex;
-        flex-direction: column;
-      }
+      :root { --noosa-blue: #0ea5e9; --noosa-navy: #0f172a; --noosa-sand: #fdfcfb; }
+      body { font-family: 'Outfit', sans-serif; background-color: var(--noosa-sand); color: var(--noosa-navy); margin: 0; padding: 0; }
+      .noosa-gradient { background: linear-gradient(135deg, #fdfcfb 0%, #f0f9ff 100%); }
+      .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.4); }
+      #root { min-height: 100vh; display: flex; flex-direction: column; }
     </style>
   </head>
   <body>
-    <div class="mesh-bg"></div>
     <div id="root">
       <div class="flex-1 flex flex-col items-center justify-center p-6 text-center">
         <div class="w-16 h-16 bg-slate-900 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl mb-6">
@@ -108,6 +77,5 @@
         <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Establishing Connection...</p>
       </div>
     </div>
-    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
