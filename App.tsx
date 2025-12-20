@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import ChatInterface from './components/ChatInterface.tsx';
+import ChatInterface from './components/ChatInterface';
 import { Sunset, PlusCircle, Key, Compass, ShieldCheck, Calendar } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -9,15 +9,8 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkKeyStatus = async () => {
-      // Safely check for API Key without crashing if process is undefined
-      let envKey = false;
-      try {
-        // @ts-ignore
-        envKey = !!(typeof process !== 'undefined' && process.env && process.env.API_KEY);
-      } catch (e) {
-        envKey = false;
-      }
-
+      // Use process.env.API_KEY directly to fix the window.process error as per guidelines.
+      let envKey = !!(process.env.API_KEY);
       const wasConnected = localStorage.getItem('noosa_concierge_connected') === 'true';
       
       if ((window as any).aistudio) {
@@ -40,7 +33,6 @@ const App: React.FC = () => {
         console.error("Key selection failed", err);
       }
     } else {
-      // In standalone web mode, we just mark as connected to allow manual prompt
       localStorage.setItem('noosa_concierge_connected', 'true');
       setHasApiKey(true);
     }
@@ -67,7 +59,7 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <h1 className="text-5xl font-serif font-bold text-slate-950 mb-6 tracking-tight">
+        <h1 style={{fontFamily: 'Playfair Display, serif'}} className="text-5xl font-bold text-slate-950 mb-6 tracking-tight">
           Holiday Mode
         </h1>
         <p className="text-lg text-slate-500 mb-10 leading-relaxed font-medium">
@@ -82,22 +74,7 @@ const App: React.FC = () => {
             <Key size={18} className="text-sky-300" />
             <span>Connect to Concierge</span>
           </button>
-          
-          <div className="flex items-center justify-center gap-6 py-4 opacity-40">
-             <div className="flex items-center gap-1.5">
-               <ShieldCheck size={12} />
-               <span className="text-[8px] font-bold uppercase tracking-widest">Secure</span>
-             </div>
-             <div className="flex items-center gap-1.5">
-               <Calendar size={12} />
-               <span className="text-[8px] font-bold uppercase tracking-widest">Noosa '25</span>
-             </div>
-          </div>
         </div>
-        
-        <p className="mt-12 text-[9px] font-bold text-slate-300 uppercase tracking-[0.2em] leading-relaxed">
-          One-time setup for family access
-        </p>
       </div>
     );
   }
@@ -111,7 +88,7 @@ const App: React.FC = () => {
               <Compass size={18} />
             </div>
             <div>
-              <h1 className="text-xl font-serif font-bold text-slate-900 leading-none">
+              <h1 style={{fontFamily: 'Playfair Display, serif'}} className="text-xl font-bold text-slate-900 leading-none">
                 Noosa
               </h1>
               <p className="text-[8px] text-sky-600 font-bold tracking-[0.2em] uppercase mt-1">

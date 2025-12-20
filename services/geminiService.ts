@@ -1,15 +1,12 @@
 
 import { GoogleGenAI, Content, Modality } from "@google/genai";
-import { Message, Role } from '../types.ts';
-import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants.ts';
+import { Role } from '../types';
+import type { Message } from '../types';
+import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants';
 
 const getApiKey = () => {
-  try {
-    // @ts-ignore
-    return typeof process !== 'undefined' ? process.env.API_KEY : undefined;
-  } catch (e) {
-    return undefined;
-  }
+  // Use process.env.API_KEY directly as per Gemini API guidelines and to fix window.process error.
+  return process.env.API_KEY || "";
 };
 
 export const sendMessageToGemini = async (
@@ -22,8 +19,8 @@ export const sendMessageToGemini = async (
     const apiKey = getApiKey();
     if (!apiKey) throw new Error("API_KEY_MISSING");
     
+    // Create a new instance right before the call to ensure the latest API key is used.
     const ai = new GoogleGenAI({ apiKey });
-
     const firstUserIdx = history.findIndex(m => m.role === Role.USER);
     const validHistory = firstUserIdx !== -1 ? history.slice(firstUserIdx, -1) : [];
 
@@ -59,45 +56,14 @@ export const sendMessageToGemini = async (
       },
     });
 
-    const candidate = response.candidates?.[0];
-    let text = response.text || "";
-    const groundingMetadata = candidate?.groundingMetadata;
-
-    const chunks = groundingMetadata?.groundingChunks || [];
-    if ((!text || text.length < 25) && chunks.length > 0) {
-      const results: {title: string, uri: string}[] = [];
-      const seen = new Set();
-      
-      chunks.forEach((c: any) => {
-        const title = c.maps?.title || c.web?.title;
-        const uri = c.maps?.uri || c.web?.uri;
-        if (title && uri && !seen.has(title)) {
-          seen.add(title);
-          results.push({title, uri});
-        }
-      });
-
-      if (results.length > 0) {
-        text = `I have curated the finest locations matching your request in Noosa:\n\n` +
-               results.map(r => `- **${r.title}**: A premier local destination. [Map](${r.uri}) [Website](${r.uri})`).join('\n');
-      }
-    }
-
-    if (!text || text.trim().length < 5) {
-      text = "As your Noosa concierge, I'm finding specific details for that request. It appears to be a unique local gem. I recommend checking **Signature Noosa** on Hastings Street for artisanal baked goods or **Bistro C** for a world-class dining experience.";
-    }
-
-    return { text, groundingMetadata };
+    return { 
+      text: response.text || "I'm having trouble retrieving coastal insights right now.", 
+      groundingMetadata: response.candidates?.[0]?.groundingMetadata 
+    };
 
   } catch (error: any) {
-    console.error("Gemini Production Error:", error);
-    if (error.message?.includes("403") || error.message?.includes("not found")) {
-      throw error;
-    }
-    return { 
-      text: "I'm currently unable to access the coastal network. Please ensure you are connected and try again shortly.",
-      groundingMetadata: undefined 
-    };
+    console.error("Gemini Error:", error);
+    throw error;
   }
 };
 
@@ -112,7 +78,7 @@ export const transcribeAudio = async (base64Audio: string): Promise<string> => {
       contents: {
         parts: [
           { inlineData: { mimeType: 'audio/webm', data: base64Audio } },
-          { text: "Transcribe the audio accurately. Focus on Noosa place names like Hastings Street, Gympie Terrace, or Noosa Woods." }
+          { text: "Transcribe the audio accurately. Focus on Noosa place names." }
         ]
       }
     });

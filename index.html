@@ -13,6 +13,19 @@
     <title>Noosa Navigator | Holiday Concierge</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+    
+    <!-- Polyfill for process.env to prevent crashes -->
+    <script>
+      window.process = { env: { API_KEY: "" } };
+      window.addEventListener('error', function(e) {
+        console.error('Global Error:', e.message);
+        const root = document.getElementById('root');
+        if (root && root.innerHTML === '') {
+          root.innerHTML = '<div style="padding: 20px; color: #ef4444; font-family: sans-serif;"><b>App Load Error:</b><br>' + e.message + '<br><br>Check the browser console for details.</div>';
+        }
+      });
+    </script>
+
     <style>
       :root {
         --noosa-blue: #0ea5e9;
@@ -23,21 +36,17 @@
         font-family: 'Outfit', sans-serif;
         background-color: var(--noosa-sand);
         color: var(--noosa-navy);
-        overflow-x: hidden;
         margin: 0;
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        padding: 0;
       }
-      h1, h2, h3, h4, .serif {
-        font-family: 'Playfair Display', serif;
+      .noosa-gradient {
+        background: linear-gradient(135deg, #fdfcfb 0%, #f0f9ff 100%);
       }
       .glass {
         background: rgba(255, 255, 255, 0.75);
         backdrop-filter: blur(16px);
         -webkit-backdrop-filter: blur(16px);
         border: 1px solid rgba(255, 255, 255, 0.4);
-      }
-      .noosa-gradient {
-        background: linear-gradient(135deg, #fdfcfb 0%, #f0f9ff 100%);
       }
       .mesh-bg {
         position: fixed;
@@ -47,36 +56,10 @@
         height: 100%;
         z-index: -1;
         background: radial-gradient(at 0% 0%, rgba(14, 165, 233, 0.08) 0, transparent 50%),
-                    radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.04) 0, transparent 50%),
-                    radial-gradient(at 100% 100%, rgba(14, 165, 233, 0.08) 0, transparent 50%),
-                    radial-gradient(at 0% 100%, rgba(245, 158, 11, 0.04) 0, transparent 50%);
-      }
-      .message-enter {
-        animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-      }
-      @keyframes slideUp {
-        from { opacity: 0; transform: translateY(30px) scale(0.98); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-      .voice-wave {
-        display: flex;
-        align-items: center;
-        gap: 3px;
-        height: 16px;
-      }
-      .voice-wave span {
-        width: 2px;
-        height: 100%;
-        background: #0ea5e9;
-        border-radius: 10px;
-        animation: wave 1s ease-in-out infinite;
-      }
-      @keyframes wave {
-        0%, 100% { height: 20%; }
-        50% { height: 100%; }
+                    radial-gradient(at 100% 0%, rgba(245, 158, 11, 0.04) 0, transparent 50%);
       }
     </style>
-<script type="importmap">
+  <script type="importmap">
 {
   "imports": {
     "react": "https://esm.sh/react@^19.2.3",
@@ -90,7 +73,16 @@
 </head>
   <body>
     <div class="mesh-bg"></div>
-    <div id="root"></div>
+    <div id="root">
+      <!-- Initial loading state while JS loads -->
+      <div class="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+        <div class="w-16 h-16 bg-slate-900 rounded-[1.5rem] flex items-center justify-center text-white shadow-xl mb-6">
+          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+        </div>
+        <h2 style="font-family: 'Playfair Display', serif;" class="text-2xl font-bold text-slate-900 mb-2">Noosa Navigator</h2>
+        <p class="text-slate-400 text-xs font-bold uppercase tracking-[0.3em] animate-pulse">Initializing Concierge...</p>
+      </div>
+    </div>
     
     <script type="module">
       import { run } from "https://esm.sh/run";

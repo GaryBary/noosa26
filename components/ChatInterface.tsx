@@ -1,11 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Mic, Volume2, VolumeX, XCircle, Loader2 } from 'lucide-react';
-import ChatBubble from './ChatBubble.tsx';
-import { Message, Role } from '../types.ts';
-import { sendMessageToGemini, generateSpeech, transcribeAudio } from '../services/geminiService.ts';
-import { SUGGESTED_QUESTIONS } from '../constants.ts';
-import { decodeBase64, decodeAudioData, recordAudio } from '../utils/audio.ts';
+import ChatBubble from './ChatBubble';
+import { Role } from '../types';
+import type { Message } from '../types';
+import { sendMessageToGemini, generateSpeech, transcribeAudio } from '../services/geminiService';
+import { SUGGESTED_QUESTIONS } from '../constants';
+import { decodeBase64, decodeAudioData, recordAudio } from '../utils/audio';
 
 interface ChatInterfaceProps {
   onApiKeyError?: () => void;
@@ -71,7 +72,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
         setIsRecording(true);
       } catch (e) {
         console.error("Mic access denied", e);
-        onApiKeyError?.();
       }
     }
   };
@@ -134,12 +134,10 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] md:h-[calc(100vh-100px)] max-w-4xl mx-auto relative px-4">
-      
       <div className="flex-1 overflow-y-auto pt-8 pb-48 space-y-4 no-scrollbar">
         {messages.map((msg) => (
           <ChatBubble key={msg.id} message={msg} />
         ))}
-        
         {isLoading && (
           <div className="flex justify-start w-full mb-8">
              <div className="flex flex-row items-center gap-4">
@@ -187,7 +185,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
             >
               {isRecording ? <XCircle size={24} /> : (isTranscribing ? <Loader2 size={22} className="animate-spin text-sky-600" /> : <Mic size={22} />)}
             </button>
-
             {isRecording ? (
                <div className="flex-1 px-6 flex items-center gap-3">
                  <div className="voice-wave">
@@ -208,13 +205,7 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
                     onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(inputText)}
                     disabled={isLoading || isTranscribing}
                   />
-                  {isTranscribing && (
-                    <div className="absolute inset-0 flex items-center px-4">
-                      <span className="text-sky-600/60 font-medium animate-pulse">Processing your voice...</span>
-                    </div>
-                  )}
                 </div>
-                
                 <button
                   onClick={() => setVoiceResponseEnabled(!voiceResponseEnabled)}
                   className={`mx-2 w-10 h-10 rounded-full flex items-center justify-center transition-all ${
@@ -223,7 +214,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
                 >
                   {voiceResponseEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
                 </button>
-
                 <button
                   onClick={() => handleSendMessage(inputText)}
                   disabled={!inputText.trim() || isLoading || isTranscribing}
@@ -238,11 +228,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
               </>
             )}
           </div>
-        </div>
-        <div className="flex justify-center">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] opacity-60">
-                Noosa Navigator | Hastings St. Concierge
-            </p>
         </div>
       </div>
     </div>
