@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ChatInterface from './components/ChatInterface.tsx';
-import { Sunset, PlusCircle, Key, Compass, Info, ShieldCheck, Map as MapIcon, Calendar } from 'lucide-react';
+import { Sunset, PlusCircle, Key, Compass, ShieldCheck, Calendar } from 'lucide-react';
 
 const App: React.FC = () => {
   const [sessionKey, setSessionKey] = useState(0);
@@ -9,13 +9,22 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkKeyStatus = async () => {
+      // Safely check for API Key without crashing if process is undefined
+      let envKey = false;
+      try {
+        // @ts-ignore
+        envKey = !!(typeof process !== 'undefined' && process.env && process.env.API_KEY);
+      } catch (e) {
+        envKey = false;
+      }
+
       const wasConnected = localStorage.getItem('noosa_concierge_connected') === 'true';
       
       if ((window as any).aistudio) {
         const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-        setHasApiKey(hasKey || wasConnected);
+        setHasApiKey(hasKey || wasConnected || envKey);
       } else {
-        setHasApiKey(!!process.env.API_KEY || wasConnected);
+        setHasApiKey(envKey || wasConnected);
       }
     };
     checkKeyStatus();
@@ -31,10 +40,9 @@ const App: React.FC = () => {
         console.error("Key selection failed", err);
       }
     } else {
-      if (process.env.API_KEY) {
-        localStorage.setItem('noosa_concierge_connected', 'true');
-        setHasApiKey(true);
-      }
+      // In standalone web mode, we just mark as connected to allow manual prompt
+      localStorage.setItem('noosa_concierge_connected', 'true');
+      setHasApiKey(true);
     }
   };
 
@@ -96,7 +104,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col noosa-gradient">
-      <header className="sticky top-0 z-50 glass border-b border-white/20 px-5 h-16 md:h-20 no-select">
+      <header className="sticky top-0 z-50 glass border-b border-white/20 px-5 h-16 md:h-20 select-none">
         <div className="max-w-4xl mx-auto h-full flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">

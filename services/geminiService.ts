@@ -3,6 +3,15 @@ import { GoogleGenAI, Content, Modality } from "@google/genai";
 import { Message, Role } from '../types.ts';
 import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants.ts';
 
+const getApiKey = () => {
+  try {
+    // @ts-ignore
+    return typeof process !== 'undefined' ? process.env.API_KEY : undefined;
+  } catch (e) {
+    return undefined;
+  }
+};
+
 export const sendMessageToGemini = async (
   currentMessage: string,
   history: Message[],
@@ -10,7 +19,7 @@ export const sendMessageToGemini = async (
 ): Promise<{ text: string; groundingMetadata?: any }> => {
   
   try {
-    const apiKey = process.env.API_KEY;
+    const apiKey = getApiKey();
     if (!apiKey) throw new Error("API_KEY_MISSING");
     
     const ai = new GoogleGenAI({ apiKey });
@@ -94,7 +103,7 @@ export const sendMessageToGemini = async (
 
 export const transcribeAudio = async (base64Audio: string): Promise<string> => {
   try {
-    const apiKey = process.env.API_KEY;
+    const apiKey = getApiKey();
     if (!apiKey) return "";
     const ai = new GoogleGenAI({ apiKey });
 
@@ -116,7 +125,7 @@ export const transcribeAudio = async (base64Audio: string): Promise<string> => {
 
 export const generateSpeech = async (text: string): Promise<string | null> => {
   try {
-    const apiKey = process.env.API_KEY;
+    const apiKey = getApiKey();
     if (!apiKey) return null;
     const ai = new GoogleGenAI({ apiKey });
 
