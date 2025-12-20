@@ -1,12 +1,11 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Mic, Volume2, VolumeX, XCircle, Loader2 } from 'lucide-react';
-import ChatBubble from './ChatBubble';
-import { Role } from '../types';
-import type { Message } from '../types';
-import { sendMessageToGemini, generateSpeech, transcribeAudio } from '../services/geminiService';
-import { SUGGESTED_QUESTIONS } from '../constants';
-import { decodeBase64, decodeAudioData, recordAudio } from '../utils/audio';
+import ChatBubble from './ChatBubble.tsx';
+import { Role } from '../types.ts';
+import type { Message } from '../types.ts';
+import { sendMessageToGemini, generateSpeech, transcribeAudio } from '../services/geminiService.ts';
+import { SUGGESTED_QUESTIONS } from '../constants.ts';
+import { decodeBase64, decodeAudioData, recordAudio } from '../utils/audio.ts';
 
 interface ChatInterfaceProps {
   onApiKeyError?: () => void;

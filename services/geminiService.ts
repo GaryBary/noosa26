@@ -1,8 +1,7 @@
-
 import { GoogleGenAI, Content, Modality } from "@google/genai";
-import { Role } from '../types';
-import type { Message } from '../types';
-import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants';
+import { Role } from '../types.ts';
+import type { Message } from '../types.ts';
+import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants.ts';
 
 const getApiKey = () => {
   try {

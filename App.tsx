@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import ChatInterface from './components/ChatInterface';
+import ChatInterface from './components/ChatInterface.tsx';
 import { Sunset, PlusCircle, Key, Compass } from 'lucide-react';
 
 const App: React.FC = () => {

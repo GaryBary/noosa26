@@ -11,7 +11,7 @@
     
     <title>Noosa Navigator | Holiday Concierge</title>
     
-    <!-- Polyfill for process.env -->
+    <!-- Robust Polyfill for process.env -->
     <script>
       window.process = { 
         env: { 
@@ -20,25 +20,24 @@
         } 
       };
 
-      // Global error tracker to stop the "Forever Loading" state
-      window.onerror = function(message, source, lineno, colno, error) {
+      // Error reporting during initialization
+      window.addEventListener('error', function(event) {
         const root = document.getElementById('root');
-        if (root && root.querySelector('.animate-pulse')) {
+        if (root && root.innerHTML.includes('Establishing Connection')) {
           root.innerHTML = `
-            <div style="padding: 40px; text-align: center; font-family: sans-serif; color: #334155;">
-              <h1 style="color: #ef4444; font-size: 1.2rem; margin-bottom: 12px;">Initialization Error</h1>
-              <p style="font-size: 0.9rem; margin-bottom: 20px;">The concierge could not be reached.</p>
-              <div style="background: #f8fafc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; text-align: left; overflow: auto;">
-                ${message}
+            <div style="padding: 40px; text-align: center; font-family: 'Outfit', sans-serif; color: #334155; background: #fdfcfb; min-height: 100vh; display: flex; flex-direction: column; items-center; justify-content: center;">
+              <h1 style="color: #ef4444; font-size: 1.5rem; margin-bottom: 12px; font-weight: 700;">Concierge Offline</h1>
+              <p style="font-size: 0.9rem; margin-bottom: 20px; color: #64748b;">A connection error occurred while loading the coastal guides.</p>
+              <div style="background: #f1f5f9; padding: 16px; border-radius: 12px; font-family: monospace; font-size: 11px; text-align: left; overflow: auto; max-width: 80%; border: 1px solid #e2e8f0; color: #475569;">
+                ${event.message}
               </div>
-              <button onclick="location.reload()" style="margin-top: 20px; padding: 8px 20px; background: #0f172a; color: white; border: none; border-radius: 20px; font-size: 12px; cursor: pointer;">
-                Retry Connection
+              <button onclick="location.reload()" style="margin-top: 24px; padding: 12px 32px; background: #0f172a; color: white; border: none; border-radius: 100px; font-size: 14px; font-weight: 600; cursor: pointer; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);">
+                Restart Navigator
               </button>
             </div>
           `;
         }
-        return false;
-      };
+      });
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
