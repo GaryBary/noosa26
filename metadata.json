@@ -1,0 +1,13 @@
+{
+  "name": "Noosa Navigator",
+  "short_name": "Noosa",
+  "description": "Elite Coastal Concierge for your Noosa Holiday.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#fdfcfb",
+  "theme_color": "#0f172a",
+  "requestFramePermissions": [
+    "microphone",
+    "geolocation"
+  ]
+}
