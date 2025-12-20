@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ChatInterface from './components/ChatInterface';
-import { Sunset, PlusCircle, Key, Compass, ShieldCheck, Calendar } from 'lucide-react';
+import { Sunset, PlusCircle, Key, Compass } from 'lucide-react';
 
 const App: React.FC = () => {
   const [sessionKey, setSessionKey] = useState(0);
@@ -9,8 +9,15 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkKeyStatus = async () => {
-      // Use process.env.API_KEY directly to fix the window.process error as per guidelines.
-      let envKey = !!(process.env.API_KEY);
+      // Safely check for API Key without assuming process exists globally in all browser states
+      let envKey = false;
+      try {
+        // @ts-ignore
+        envKey = !!(typeof process !== 'undefined' && process.env?.API_KEY);
+      } catch (e) {
+        envKey = false;
+      }
+
       const wasConnected = localStorage.getItem('noosa_concierge_connected') === 'true';
       
       if ((window as any).aistudio) {

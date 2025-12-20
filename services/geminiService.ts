@@ -5,8 +5,12 @@ import type { Message } from '../types';
 import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants';
 
 const getApiKey = () => {
-  // Use process.env.API_KEY directly as per Gemini API guidelines and to fix window.process error.
-  return process.env.API_KEY || "";
+  try {
+    // @ts-ignore
+    return (typeof process !== 'undefined' && process.env?.API_KEY) || "";
+  } catch (e) {
+    return "";
+  }
 };
 
 export const sendMessageToGemini = async (
@@ -19,7 +23,6 @@ export const sendMessageToGemini = async (
     const apiKey = getApiKey();
     if (!apiKey) throw new Error("API_KEY_MISSING");
     
-    // Create a new instance right before the call to ensure the latest API key is used.
     const ai = new GoogleGenAI({ apiKey });
     const firstUserIdx = history.findIndex(m => m.role === Role.USER);
     const validHistory = firstUserIdx !== -1 ? history.slice(firstUserIdx, -1) : [];
