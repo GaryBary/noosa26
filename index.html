@@ -12,34 +12,29 @@
     <title>Noosa Navigator | Holiday Concierge</title>
     
     <script>
-      // 1. Polyfill process.env
+      // Early Polyfill for process.env
       window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
 
-      // 2. Catch Standard Errors
-      window.onerror = function(msg, url, lineNo, columnNo, error) {
-        console.error('Window Error:', msg, error);
-        reportInitError(msg);
-        return false;
-      };
-
-      // 3. Catch Module/Promise Errors (Crucial for ESM load failures)
-      window.onunhandledrejection = function(event) {
-        console.error('Promise Rejection:', event.reason);
-        reportInitError(event.reason?.message || 'Module load failure');
-      };
-
-      function reportInitError(message) {
+      // Detailed error reporting to the UI for debugging "stuck" screens
+      function reportInitError(message, details = '') {
+        console.error('INIT_ERROR:', message, details);
         const root = document.getElementById('root');
-        if (root && (root.innerHTML.includes('Establishing') || root.innerHTML === '')) {
+        if (root) {
           root.innerHTML = `
             <div style="padding: 40px; text-align: center; font-family: sans-serif; color: #334155; background: #fdfcfb; min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-              <h1 style="color: #ef4444; font-size: 1.2rem; margin-bottom: 8px;">Initialization Failed</h1>
+              <h1 style="color: #ef4444; font-size: 1.2rem; margin-bottom: 8px;">Concierge Offline</h1>
               <p style="font-size: 0.85rem; color: #64748b; margin-bottom: 24px; max-width: 300px;">${message}</p>
-              <button onclick="location.reload()" style="padding: 10px 24px; background: #0f172a; color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer;">Retry Connection</button>
+              <div style="font-size: 10px; color: #94a3b8; background: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 20px; text-align: left; max-width: 90%; overflow-x: auto; font-family: monospace;">
+                ${details}
+              </div>
+              <button onclick="location.reload()" style="padding: 10px 24px; background: #0f172a; color: white; border: none; border-radius: 20px; font-size: 13px; cursor: pointer; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">Reconnect</button>
             </div>
           `;
         }
       }
+
+      window.onerror = (msg, url, line, col, err) => reportInitError('A script error occurred during startup.', `${msg}\nLocation: ${url}:${line}:${col}`);
+      window.onunhandledrejection = (event) => reportInitError('Module loading failed.', event.reason?.message || 'The browser could not load a required resource. This is often caused by 404 errors in the network tab.');
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -51,8 +46,8 @@
     "react": "https://esm.sh/react@19.0.0",
     "react-dom": "https://esm.sh/react-dom@19.0.0",
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "@google/genai": "https://esm.sh/@google/genai@1.3.0",
     "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
+    "@google/genai": "https://esm.sh/@google/genai@1.3.0",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/"
   }
@@ -62,8 +57,6 @@
     <style>
       :root { --noosa-blue: #0ea5e9; --noosa-navy: #0f172a; --noosa-sand: #fdfcfb; }
       body { font-family: 'Outfit', sans-serif; background-color: var(--noosa-sand); color: var(--noosa-navy); margin: 0; padding: 0; }
-      .noosa-gradient { background: linear-gradient(135deg, #fdfcfb 0%, #f0f9ff 100%); }
-      .glass { background: rgba(255, 255, 255, 0.75); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.4); }
       #root { min-height: 100vh; display: flex; flex-direction: column; }
     </style>
   </head>
@@ -77,5 +70,7 @@
         <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Establishing Connection...</p>
       </div>
     </div>
+    <!-- Explicitly load the main application module -->
+    <script type="module" src="./index.tsx"></script>
   </body>
 </html>
