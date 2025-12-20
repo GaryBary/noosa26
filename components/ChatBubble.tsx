@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Message, Role } from '../types';
+import { Message, Role } from '../types.ts';
 import { User, MapPin, ExternalLink, Globe, Mic, Waves, Compass, Share2 } from 'lucide-react';
 
 interface ChatBubbleProps { message: Message; }

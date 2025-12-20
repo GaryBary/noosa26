@@ -1,11 +1,11 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Sparkles, Mic, Volume2, VolumeX, XCircle, Loader2 } from 'lucide-react';
-import ChatBubble from './ChatBubble';
-import { Message, Role } from '../types';
-import { sendMessageToGemini, generateSpeech, transcribeAudio } from '../services/geminiService';
-import { SUGGESTED_QUESTIONS } from '../constants';
-import { decodeBase64, decodeAudioData, recordAudio } from '../utils/audio';
+import ChatBubble from './ChatBubble.tsx';
+import { Message, Role } from '../types.ts';
+import { sendMessageToGemini, generateSpeech, transcribeAudio } from '../services/geminiService.ts';
+import { SUGGESTED_QUESTIONS } from '../constants.ts';
+import { decodeBase64, decodeAudioData, recordAudio } from '../utils/audio.ts';
 
 interface ChatInterfaceProps {
   onApiKeyError?: () => void;
@@ -104,7 +104,6 @@ const ChatInterface: React.FC<ChatInterfaceProps> = ({ onApiKeyError }) => {
       timestamp: Date.now() 
     };
     
-    // We must pass the actual updated history to the API because state updates are async
     const updatedHistory = [...messages, userMsg];
     setMessages(updatedHistory);
     setInputText('');

@@ -1,13 +1,8 @@
 
 import { GoogleGenAI, Content, Modality } from "@google/genai";
-import { Message, Role } from '../types';
-import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants';
+import { Message, Role } from '../types.ts';
+import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants.ts';
 
-/**
- * PRODUCTION NOTE:
- * In a full production environment, this function would ideally point to your own 
- * backend endpoint (e.g. /api/chat) to keep the API_KEY hidden from the client browser.
- */
 export const sendMessageToGemini = async (
   currentMessage: string,
   history: Message[],
@@ -20,7 +15,6 @@ export const sendMessageToGemini = async (
     
     const ai = new GoogleGenAI({ apiKey });
 
-    // Filter history for API compliance (must start with user)
     const firstUserIdx = history.findIndex(m => m.role === Role.USER);
     const validHistory = firstUserIdx !== -1 ? history.slice(firstUserIdx, -1) : [];
 
@@ -38,7 +32,6 @@ export const sendMessageToGemini = async (
       currentParts.push({ inlineData: { mimeType: 'audio/webm', data: currentAudio } });
     }
 
-    // Use gemini-2.5-flash for Maps grounding support.
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
@@ -53,7 +46,7 @@ export const sendMessageToGemini = async (
             latLng: NOOSA_HEADS_COORDS
           }
         },
-        temperature: 0.15, // Highly factual for concierge duties
+        temperature: 0.15,
       },
     });
 
@@ -61,7 +54,6 @@ export const sendMessageToGemini = async (
     let text = response.text || "";
     const groundingMetadata = candidate?.groundingMetadata;
 
-    // Build smart response from grounding chunks if text is missing or poor
     const chunks = groundingMetadata?.groundingChunks || [];
     if ((!text || text.length < 25) && chunks.length > 0) {
       const results: {title: string, uri: string}[] = [];
@@ -82,7 +74,6 @@ export const sendMessageToGemini = async (
       }
     }
 
-    // Final sanity check for local precision
     if (!text || text.trim().length < 5) {
       text = "As your Noosa concierge, I'm finding specific details for that request. It appears to be a unique local gem. I recommend checking **Signature Noosa** on Hastings Street for artisanal baked goods or **Bistro C** for a world-class dining experience.";
     }
@@ -91,12 +82,9 @@ export const sendMessageToGemini = async (
 
   } catch (error: any) {
     console.error("Gemini Production Error:", error);
-    
-    // Bubble up auth errors to trigger API Key selection in this specific environment
     if (error.message?.includes("403") || error.message?.includes("not found")) {
       throw error;
     }
-
     return { 
       text: "I'm currently unable to access the coastal network. Please ensure you are connected and try again shortly.",
       groundingMetadata: undefined 

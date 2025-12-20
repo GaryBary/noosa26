@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import ChatInterface from './components/ChatInterface';
+import ChatInterface from './components/ChatInterface.tsx';
 import { Sunset, PlusCircle, Key, Compass, Info, ShieldCheck, Map as MapIcon, Calendar } from 'lucide-react';
 
 const App: React.FC = () => {
@@ -9,15 +9,12 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkKeyStatus = async () => {
-      // Check if we've already authorized in a previous visit this holiday
       const wasConnected = localStorage.getItem('noosa_concierge_connected') === 'true';
       
       if ((window as any).aistudio) {
         const hasKey = await (window as any).aistudio.hasSelectedApiKey();
-        // If the platform says we have a key, or if we previously recorded a successful connection
         setHasApiKey(hasKey || wasConnected);
       } else {
-        // Fallback for direct hosting with environment variables
         setHasApiKey(!!process.env.API_KEY || wasConnected);
       }
     };
@@ -28,21 +25,15 @@ const App: React.FC = () => {
     if ((window as any).aistudio) {
       try {
         await (window as any).aistudio.openSelectKey();
-        // Race condition mitigation: Assume success and persist selection state
         localStorage.setItem('noosa_concierge_connected', 'true');
         setHasApiKey(true);
       } catch (err) {
         console.error("Key selection failed", err);
       }
     } else {
-      // If hosted directly on GitHub Pages without the wrapper, 
-      // the API_KEY must be provided via the build environment.
       if (process.env.API_KEY) {
         localStorage.setItem('noosa_concierge_connected', 'true');
         setHasApiKey(true);
-      } else {
-        // Direct users to the authorized entry point
-        console.log("Waiting for API key configuration...");
       }
     }
   };
@@ -136,7 +127,6 @@ const App: React.FC = () => {
 
       <main className="flex-1 overflow-hidden">
         <ChatInterface key={sessionKey} onApiKeyError={() => {
-          // If a request fails due to key issues, reset the state so they can re-connect
           localStorage.removeItem('noosa_concierge_connected');
           setHasApiKey(false);
         }} />
