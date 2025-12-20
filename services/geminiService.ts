@@ -5,8 +5,11 @@ import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants.ts';
 
 const getApiKey = () => {
   try {
-    // @ts-ignore
-    return process.env.API_KEY || "";
+    // Check for process and process.env safely
+    if (typeof process !== 'undefined' && process.env && process.env.API_KEY) {
+      return process.env.API_KEY;
+    }
+    return "";
   } catch (e) {
     return "";
   }
