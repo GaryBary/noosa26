@@ -7,7 +7,7 @@ import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants';
 const getApiKey = () => {
   try {
     // @ts-ignore
-    return (typeof process !== 'undefined' && process.env?.API_KEY) || "";
+    return process.env.API_KEY || "";
   } catch (e) {
     return "";
   }

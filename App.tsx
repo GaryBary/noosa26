@@ -9,11 +9,10 @@ const App: React.FC = () => {
 
   useEffect(() => {
     const checkKeyStatus = async () => {
-      // Safely check for API Key without assuming process exists globally in all browser states
       let envKey = false;
       try {
         // @ts-ignore
-        envKey = !!(typeof process !== 'undefined' && process.env?.API_KEY);
+        envKey = !!(process.env.API_KEY);
       } catch (e) {
         envKey = false;
       }
@@ -47,7 +46,7 @@ const App: React.FC = () => {
 
   if (hasApiKey === null) {
     return (
-      <div className="min-h-screen bg-[#FDFCFB] flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
         <div className="flex flex-col items-center">
           <div className="w-12 h-12 border-4 border-sky-100 border-t-sky-600 rounded-full animate-spin"></div>
           <span className="mt-6 text-slate-400 font-bold uppercase tracking-[0.3em] text-[9px]">Noosa Navigator...</span>
