@@ -11,45 +11,20 @@
     
     <title>Noosa Navigator | Holiday Concierge</title>
     
+    <!-- Polyfill for process.env -->
     <script>
-      // 1. Establish process polyfill immediately
       window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
-
-      // 2. Global error catching for initialization failures
-      window.onerror = function(msg, url, line, col, error) {
-        console.error("Global Error:", msg, url, line);
-        const root = document.getElementById('root');
-        if (root && root.innerHTML.includes('Establishing')) {
-          root.innerHTML = `
-            <div style="padding: 40px; text-align: center; font-family: 'Outfit', sans-serif; color: #475569;">
-              <div style="font-size: 40px; margin-bottom: 20px;">🏝️</div>
-              <h2 style="color: #0f172a; font-size: 1.25rem; margin-bottom: 8px; font-weight: 700;">Connection Interrupted</h2>
-              <p style="font-size: 0.875rem; color: #64748b; max-width: 250px; margin: 0 auto 20px;">The concierge is having trouble loading. This often happens due to network or configuration errors.</p>
-              <button onclick="location.reload()" style="padding: 12px 24px; background: #0f172a; color: white; border: none; border-radius: 99px; cursor: pointer; font-weight: 600; font-size: 14px;">Retry Connection</button>
-            </div>
-          `;
-        }
-        return false;
-      };
     </script>
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Babel Standalone: Compiles React/TS in the browser -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
     
-    <script type="importmap">
-{
-  "imports": {
-    "react": "https://esm.sh/react@19.0.0",
-    "react-dom": "https://esm.sh/react-dom@19.0.0",
-    "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
-    "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
-    "@google/genai": "https://esm.sh/@google/genai@latest",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/"
-  }
-}
-</script>
-
     <style>
       :root { --noosa-blue: #0ea5e9; --noosa-navy: #0f172a; --noosa-sand: #fdfcfb; }
       body { font-family: 'Outfit', sans-serif; background-color: var(--noosa-sand); color: var(--noosa-navy); margin: 0; padding: 0; overflow: hidden; }
@@ -72,7 +47,17 @@
       .voice-wave span:nth-child(5) { animation-delay: 0.4s; height: 10px; }
       @keyframes wave { 0%, 100% { transform: scaleY(1); } 50% { transform: scaleY(1.5); } }
     </style>
-  </head>
+  <script type="importmap">
+{
+  "imports": {
+    "@google/genai": "https://esm.sh/@google/genai@^1.34.0",
+    "lucide-react": "https://esm.sh/lucide-react@^0.562.0",
+    "react/": "https://esm.sh/react@^19.2.3/",
+    "react": "https://esm.sh/react@^19.2.3"
+  }
+}
+</script>
+</head>
   <body>
     <div id="root">
       <div class="flex-1 flex flex-col items-center justify-center p-6 text-center bg-[#fdfcfb]">
@@ -80,9 +65,500 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
         </div>
         <h2 style="font-family: 'Playfair Display', serif;" class="text-2xl font-bold text-slate-900 mb-2">Noosa Navigator</h2>
-        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Establishing Connection...</p>
+        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Initializing Application...</p>
       </div>
     </div>
-    <script type="module" src="./index.tsx"></script>
+
+    <!-- Main Application Logic -->
+    <script type="text/babel" data-type="module" data-presets="typescript,react">
+      /**
+       * NOOSA NAVIGATOR - SINGLE FILE STANDALONE VERSION
+       * Optimized for GitHub Pages direct deployment.
+       */
+
+      // --- IMPORTS ---
+      import React, { useState, useEffect, useRef } from "https://esm.sh/react@19.0.0";
+      import { createRoot } from "https://esm.sh/react-dom@19.0.0/client";
+      import { GoogleGenAI } from "https://esm.sh/@google/genai@latest";
+      import { 
+        Sunset, Key, Compass, Waves, Trees, ShoppingBag, Navigation,
+        Send, Sparkles, Mic, Volume2, VolumeX, XCircle, Loader2,
+        User, MapPin, ExternalLink, Globe, Share2
+      } from "https://esm.sh/lucide-react@0.460.0?external=react";
+
+      // --- CONSTANTS ---
+      const NOOSA_HEADS_COORDS = {
+        latitude: -26.3945,
+        longitude: 153.0864
+      };
+
+      const SYSTEM_INSTRUCTION = `
+      You are the "Noosa Navigator," an elite local concierge for Noosa, QLD. You are an absolute expert in the following regional localities:
+
+      1. **Noosa Heads**: Hastings Street (dining/shopping), Main Beach, and the National Park.
+      2. **Noosaville**: Gympie Terrace, Noosa River, and refined riverfront dining.
+      3. **Sunshine Beach**: Elite surf breaks, bohemian village vibes.
+      4. **Noosa Hinterland**: Eumundi Markets, Cooroy, and Pomona.
+
+      **STRICT RELEVANCE:**
+      - If a locality is specified in the context, prioritize results within that specific area.
+
+      **STRICT RESPONSE FORMATTING:**
+      1. **NO INTERNAL MONOLOGUE.**
+      2. **MANDATORY LINKS:** Every venue MUST include: \`[Map](URL)\` and \`[Website](URL)\`. 
+      3. **VENUE STRUCTURE:**
+         - **Venue Name**: One sentence local insight. [Map](URL) [Website](URL)
+
+      **PRIMARY DIRECTIVES:**
+      - **BE CONCISE:** Maximum 3 specific bullet points.
+      - **MANDATORY SEARCH:** Always use Google Search/Maps to provide real-time URLs.
+      - **TONE:** Sophisticated, elite, and highly efficient.
+      `;
+
+      // --- AUDIO UTILS ---
+      function decodeBase64(base64) {
+        const binaryString = atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        return bytes;
+      }
+
+      async function decodeAudioData(data, ctx, sampleRate = 24000, numChannels = 1) {
+        const dataInt16 = new Int16Array(data.buffer);
+        const frameCount = dataInt16.length / numChannels;
+        const buffer = ctx.createBuffer(numChannels, frameCount, sampleRate);
+        for (let channel = 0; channel < numChannels; channel++) {
+          const channelData = buffer.getChannelData(channel);
+          for (let i = 0; i < frameCount; i++) {
+            channelData[i] = dataInt16[i * numChannels + channel] / 32768.0;
+          }
+        }
+        return buffer;
+      }
+
+      const recordAudio = async () => {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+        const audioChunks = [];
+        mediaRecorder.ondataavailable = (event) => audioChunks.push(event.data);
+        mediaRecorder.start();
+        const stop = () => {
+          return new Promise((resolve) => {
+            mediaRecorder.onstop = async () => {
+              const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+              const reader = new FileReader();
+              reader.readAsDataURL(audioBlob);
+              reader.onloadend = () => {
+                const base64String = (reader.result).split(',')[1];
+                resolve(base64String);
+                stream.getTracks().forEach(track => track.stop());
+              };
+            };
+            mediaRecorder.stop();
+          });
+        };
+        return { stop };
+      };
+
+      // --- GEMINI SERVICE ---
+      const getApiKey = () => {
+        try {
+          // @ts-ignore
+          return (typeof process !== 'undefined' && process.env?.API_KEY) || "";
+        } catch (e) { return ""; }
+      };
+
+      const sendMessageToGemini = async (currentMessage, history, localityContext) => {
+        try {
+          const apiKey = getApiKey();
+          if (!apiKey) throw new Error("API_KEY_MISSING");
+          
+          const ai = new GoogleGenAI({ apiKey });
+          
+          const formattedHistory = history.map((msg) => ({
+            role: msg.role === 'user' ? 'user' : 'model',
+            parts: [{ text: msg.text }],
+          }));
+
+          const contextualMessage = localityContext && localityContext !== 'All Noosa' 
+            ? `[Locality Context: ${localityContext}] ${currentMessage}`
+            : currentMessage;
+
+          const response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: [
+              ...formattedHistory,
+              { role: 'user', parts: [{ text: contextualMessage }] }
+            ],
+            config: {
+              systemInstruction: SYSTEM_INSTRUCTION,
+              tools: [
+                { googleSearch: {} },
+                { googleMaps: {} }
+              ],
+              toolConfig: {
+                retrievalConfig: {
+                  latLng: {
+                    latitude: NOOSA_HEADS_COORDS.latitude,
+                    longitude: NOOSA_HEADS_COORDS.longitude
+                  }
+                }
+              },
+              temperature: 0.1,
+            },
+          });
+
+          const text = response.text || "I'm having trouble retrieving coastal insights right now.";
+          const groundingMetadata = response.candidates?.[0]?.groundingMetadata;
+
+          return { text, groundingMetadata };
+
+        } catch (error) {
+          console.error("Gemini Service Error:", error);
+          const errorStr = error.toString().toLowerCase();
+          if (errorStr.includes("api_key_missing") || errorStr.includes("invalid api key") || errorStr.includes("403")) {
+            throw new Error("API_KEY_ERROR");
+          }
+          throw error;
+        }
+      };
+
+      // --- COMPONENTS ---
+      const ChatBubble = ({ message }) => {
+        const isUser = message.role === 'user';
+        const rawChunks = message.groundingMetadata?.groundingChunks || [];
+
+        const handleShare = async (title, url) => {
+          if (navigator.share) {
+            try {
+              await navigator.share({ title: `Noosa Discovery: ${title}`, url });
+            } catch (err) { window.open(url, '_blank'); }
+          } else { window.open(url, '_blank'); }
+        };
+
+        const seenUris = new Set();
+        const filteredChunks = rawChunks.reduce((acc, chunk) => {
+          const uri = (chunk.maps?.uri || chunk.web?.uri || "").trim();
+          const title = (chunk.maps?.title || chunk.web?.title || "").trim();
+          if (!uri || !title || seenUris.has(uri)) return acc;
+          seenUris.add(uri);
+          acc.push(chunk);
+          return acc;
+        }, []).slice(0, 3);
+
+        const formatText = (text) => {
+          const lines = text.split('\n');
+          return lines.map((line, lineIdx) => {
+            const parts = line.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
+            return (
+              <div key={lineIdx} className="mb-2 last:mb-0">
+                {parts.map((part, i) => {
+                  if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={i} className="font-bold text-sky-950">{part.slice(2, -2)}</strong>;
+                  }
+                  if (part.startsWith('[') && part.includes('](')) {
+                    const label = part.match(/\[(.*?)\]/)?.[1] || "Link";
+                    const url = part.match(/\((.*?)\)/)?.[1] || "#";
+                    return (
+                      <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 mx-1 rounded-full bg-sky-100 text-sky-700 hover:bg-sky-200 no-underline text-[10px] font-bold uppercase tracking-wider transition-all align-middle">
+                        {label === 'Map' ? <MapPin size={10} /> : <Globe size={10} />}
+                        {label}
+                      </a>
+                    );
+                  }
+                  return part;
+                })}
+              </div>
+            );
+          });
+        };
+
+        return (
+          <div className={`flex w-full mb-6 message-enter ${isUser ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex max-w-[95%] md:max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-3`}>
+              <div className={`flex-shrink-0 h-9 w-9 rounded-2xl flex items-center justify-center shadow-lg ${isUser ? 'bg-slate-800' : 'bg-sky-600'}`}>
+                {isUser ? <User size={18} className="text-slate-100" /> : <Compass size={18} className="text-white" />}
+              </div>
+              <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} min-w-0`}>
+                <div className={`px-5 py-4 rounded-[1.8rem] shadow-sm text-sm md:text-base leading-relaxed tracking-tight break-words overflow-hidden ${isUser ? 'bg-slate-900 text-slate-50 rounded-tr-none' : 'glass text-slate-800 rounded-tl-none border border-white/60'}`}>
+                  {formatText(message.text)}
+                </div>
+                {!isUser && filteredChunks.length > 0 && (
+                  <div className="mt-3 flex flex-wrap gap-2 w-full max-w-lg">
+                    {filteredChunks.map((chunk, idx) => {
+                      const uri = chunk.maps?.uri || chunk.web?.uri;
+                      const title = chunk.maps?.title || chunk.web?.title || "Venue";
+                      return (
+                        <div key={idx} className="flex items-center gap-2 p-2 pl-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                          <span className="font-bold text-slate-900 text-[10px] tracking-tight">{title}</span>
+                          <div className="flex items-center border-l border-slate-100 pl-2 gap-1">
+                            <a href={uri} target="_blank" className="p-1.5 rounded-full hover:bg-sky-50 text-sky-600 transition-colors">
+                              <ExternalLink size={12} />
+                            </a>
+                            <button onClick={() => handleShare(title, uri)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition-colors">
+                              <Share2 size={12} />
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const ChatInterface = ({ locality, onApiKeyError }) => {
+        const [messages, setMessages] = useState([
+          {
+            id: 'welcome',
+            role: 'model',
+            text: "Welcome to Noosa. 🌊 I am your personalized concierge. Whether you're seeking the perfect break, a coastal massage, or a world-class bistro, I am here to guide you.",
+            timestamp: Date.now()
+          }
+        ]);
+        const [inputText, setInputText] = useState('');
+        const [isLoading, setIsLoading] = useState(false);
+        const [isRecording, setIsRecording] = useState(false);
+        
+        const messagesEndRef = useRef(null);
+        const inputRef = useRef(null);
+        const stopRecordingRef = useRef(null);
+
+        const scrollToBottom = () => {
+          messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        };
+
+        useEffect(() => { scrollToBottom(); }, [messages, isLoading]);
+
+        const handleVoiceToggle = async () => {
+          if (isRecording) {
+            if (stopRecordingRef.current) {
+              setIsRecording(false);
+              stopRecordingRef.current(); // Stop recording, logic simplified for demo
+              stopRecordingRef.current = null;
+            }
+          } else {
+            try {
+              const { stop } = await recordAudio();
+              stopRecordingRef.current = stop;
+              setIsRecording(true);
+            } catch (e) { console.error("Mic access denied", e); }
+          }
+        };
+
+        const handleSendMessage = async (text) => {
+          if (!text.trim() || isLoading || isRecording) return;
+          
+          const userMsg = { id: Date.now().toString(), role: 'user', text: text, timestamp: Date.now() };
+          setMessages(prev => [...prev, userMsg]);
+          setInputText('');
+          setIsLoading(true);
+
+          try {
+            const response = await sendMessageToGemini(text, messages, locality);
+            const botMsg = { 
+              id: (Date.now() + 1).toString(), 
+              role: 'model', 
+              text: response.text, 
+              groundingMetadata: response.groundingMetadata, 
+              timestamp: Date.now() 
+            };
+            setMessages(prev => [...prev, botMsg]);
+          } catch (e) {
+            console.error("Chat Error:", e);
+            if (e.message === "API_KEY_ERROR") onApiKeyError?.();
+          } finally {
+            setIsLoading(false);
+          }
+        };
+
+        return (
+          <div className="flex flex-col h-full max-w-4xl mx-auto relative px-4">
+            <div className="flex-1 overflow-y-auto pt-8 pb-32 space-y-4 no-scrollbar">
+              {messages.map((msg) => (
+                <ChatBubble key={msg.id} message={msg} />
+              ))}
+              {isLoading && (
+                <div className="flex justify-start w-full mb-8">
+                   <div className="flex flex-row items-center gap-4">
+                    <div className="h-10 w-10 rounded-2xl bg-sky-100 flex items-center justify-center">
+                       <Sparkles size={18} className="text-sky-500 animate-spin" />
+                    </div>
+                    <div className="flex gap-1">
+                      {[0,1,2].map(i => (
+                        <span key={i} className="w-1.5 h-1.5 bg-sky-400 rounded-full animate-bounce" style={{animationDelay: `${i*0.2}s`}}></span>
+                      ))}
+                    </div>
+                   </div>
+                </div>
+              )}
+              <div ref={messagesEndRef} />
+            </div>
+
+            <div className="absolute bottom-6 left-0 right-0 px-4 space-y-4">
+              <div className={`glass shadow-2xl rounded-[2.5rem] p-2 transition-all duration-500 border-white/80 ${isRecording ? 'bg-sky-50/90 ring-4 ring-sky-100/50' : ''}`}>
+                <div className="flex items-center">
+                  <button onClick={handleVoiceToggle} disabled={isLoading} className={`flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300 ${isRecording ? 'bg-red-500 text-white shadow-lg shadow-red-200 animate-pulse' : 'bg-slate-100 text-slate-500 hover:bg-sky-100 hover:text-sky-600'}`}>
+                    {isRecording ? <XCircle size={24} /> : <Mic size={22} />}
+                  </button>
+                  {isRecording ? (
+                     <div className="flex-1 px-6 flex items-center gap-3">
+                       <span className="text-sky-700 font-bold text-sm uppercase tracking-widest">Recording...</span>
+                     </div>
+                  ) : (
+                    <>
+                      <div className="flex-1 relative flex items-center">
+                        <input
+                          ref={inputRef}
+                          type="text"
+                          className="w-full bg-transparent px-4 py-3 focus:outline-none text-slate-800 placeholder-slate-400 font-medium"
+                          placeholder={`Ask about ${locality}...`}
+                          value={inputText}
+                          onChange={(e) => setInputText(e.target.value)}
+                          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(inputText)}
+                          disabled={isLoading}
+                        />
+                      </div>
+                      <button onClick={() => handleSendMessage(inputText)} disabled={!inputText.trim() || isLoading} className={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${inputText.trim() && !isLoading ? 'bg-slate-900 text-white shadow-xl hover:scale-105 active:scale-95' : 'bg-slate-50 text-slate-200'}`}>
+                        <Send size={20} />
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      const App = () => {
+        const [sessionKey, setSessionKey] = useState(0);
+        const [hasApiKey, setHasApiKey] = useState(null);
+        const [activeLocality, setActiveLocality] = useState('All Noosa');
+
+        useEffect(() => {
+          let mounted = true;
+          const checkKeyStatus = async () => {
+            try {
+              let envKeyAvailable = false;
+              try { envKeyAvailable = !!(typeof process !== 'undefined' && process.env?.API_KEY); } catch (e) {}
+              const wasConnected = localStorage.getItem('noosa_concierge_connected') === 'true';
+              
+              if (window.aistudio) {
+                const hasSelected = await Promise.race([
+                  window.aistudio.hasSelectedApiKey(),
+                  new Promise((resolve) => setTimeout(() => resolve(false), 800))
+                ]);
+                if (mounted) setHasApiKey(hasSelected || wasConnected || envKeyAvailable);
+              } else {
+                if (mounted) setHasApiKey(envKeyAvailable || wasConnected);
+              }
+            } catch (err) { if (mounted) setHasApiKey(false); }
+          };
+          
+          const fallback = setTimeout(() => { if (mounted && hasApiKey === null) setHasApiKey(false); }, 1200);
+          checkKeyStatus();
+          return () => { mounted = false; clearTimeout(fallback); };
+        }, []);
+
+        const handleSelectKey = async () => {
+          if (window.aistudio) {
+            try {
+              await window.aistudio.openSelectKey();
+              localStorage.setItem('noosa_concierge_connected', 'true');
+              setHasApiKey(true);
+            } catch (err) { setHasApiKey(true); }
+          } else {
+            localStorage.setItem('noosa_concierge_connected', 'true');
+            setHasApiKey(true);
+          }
+        };
+
+        if (hasApiKey === null) {
+          return (
+            <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
+              <div className="flex flex-col items-center">
+                <div className="w-12 h-12 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
+              </div>
+            </div>
+          );
+        }
+
+        if (hasApiKey === false) {
+          return (
+            <div className="min-h-screen bg-[#FDFCFB] flex flex-col items-center justify-center p-6 text-center max-w-lg mx-auto">
+              <div className="relative mb-10">
+                <div className="absolute -inset-4 bg-sky-100/50 rounded-full blur-2xl animate-pulse"></div>
+                <div className="relative w-20 h-20 bg-slate-900 rounded-[2rem] flex items-center justify-center text-white shadow-2xl">
+                  <Sunset size={42} />
+                </div>
+              </div>
+              <h1 style={{fontFamily: 'Playfair Display, serif'}} className="text-4xl md:text-5xl font-bold text-slate-950 mb-6 tracking-tight leading-tight">Noosa Awaits</h1>
+              <p className="text-base md:text-lg text-slate-500 mb-10 leading-relaxed font-medium">Unlock your elite coastal concierge. Connect your API key to access real-time local expertise.</p>
+              <div className="w-full space-y-4">
+                <button onClick={handleSelectKey} className="w-full group px-8 py-5 bg-slate-900 text-white text-base font-bold rounded-full transition-all shadow-xl hover:shadow-sky-200 active:scale-95 flex items-center justify-center gap-3">
+                  <Key size={18} className="text-sky-300" /> <span>Connect to Noosa Concierge</span>
+                </button>
+              </div>
+            </div>
+          );
+        }
+
+        const regions = [
+          { name: 'Hastings St', icon: <ShoppingBag size={14} /> },
+          { name: 'Noosaville', icon: <Waves size={14} /> },
+          { name: 'Sunshine Beach', icon: <Sunset size={14} /> },
+          { name: 'Hinterland', icon: <Trees size={14} /> }
+        ];
+
+        return (
+          <div className="min-h-screen flex flex-col bg-[#FDFCFB]">
+            <header className="sticky top-0 z-50 glass border-b border-slate-100 px-5 pt-4 pb-2 select-none shadow-sm">
+              <div className="max-w-4xl mx-auto flex flex-col gap-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-slate-900 rounded-xl flex items-center justify-center text-white shadow-lg">
+                      <Compass size={18} />
+                    </div>
+                    <div>
+                      <h1 style={{fontFamily: 'Playfair Display, serif'}} className="text-xl font-bold text-slate-900 leading-none">Noosa</h1>
+                      <p className="text-[8px] text-sky-600 font-bold tracking-[0.2em] uppercase mt-1">Elite Holiday Guide</p>
+                    </div>
+                  </div>
+                  <button onClick={() => { if (window.confirm("Restart concierge session?")) setSessionKey(k => k + 1); }} className="p-2.5 rounded-full bg-white text-slate-400 border border-slate-100 shadow-sm active:scale-90 transition-transform">
+                    <Navigation size={18} />
+                  </button>
+                </div>
+                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-2">
+                  <button onClick={() => setActiveLocality('All Noosa')} className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${activeLocality === 'All Noosa' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-400 border-slate-100 hover:border-sky-200 shadow-sm'}`}>All Noosa</button>
+                  {regions.map((region) => (
+                    <button key={region.name} onClick={() => setActiveLocality(region.name)} className={`flex-shrink-0 flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${activeLocality === region.name ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-100' : 'bg-white text-slate-400 border-slate-100 hover:border-sky-200 shadow-sm'}`}>
+                      {region.icon} {region.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </header>
+            <main className="flex-1 overflow-hidden">
+              <ChatInterface key={sessionKey} locality={activeLocality} onApiKeyError={() => { localStorage.removeItem('noosa_concierge_connected'); setHasApiKey(false); }} />
+            </main>
+          </div>
+        );
+      };
+
+      // --- INITIALIZATION ---
+      const rootEl = document.getElementById('root');
+      if (rootEl) {
+        rootEl.innerHTML = ''; // Clear loading message
+        const root = createRoot(rootEl);
+        root.render(<App />);
+      }
+    </script>
   </body>
 </html>
