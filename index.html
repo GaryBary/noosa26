@@ -12,19 +12,20 @@
     <title>Noosa Navigator | Holiday Concierge</title>
     
     <script>
-      // 1. Establish process polyfill immediately
+      // Establish process polyfill immediately
       window.process = { env: { NODE_ENV: 'production', API_KEY: '' } };
 
-      // 2. Global error catching for initialization failures
+      // Global error catching
       window.onerror = function(msg, url, line, col, error) {
         console.error("Global Error:", msg);
         const root = document.getElementById('root');
-        if (root) {
+        if (root && root.innerHTML.includes('Initializing')) {
           root.innerHTML = `
-            <div style="padding: 40px; text-align: center; font-family: sans-serif; color: #475569;">
-              <h2 style="color: #ef4444; font-size: 1.25rem; margin-bottom: 8px;">Concierge Offline</h2>
-              <p style="font-size: 0.875rem; color: #64748b;">${msg}</p>
-              <button onclick="location.reload()" style="margin-top: 20px; padding: 10px 24px; background: #0f172a; color: white; border: none; border-radius: 99px; cursor: pointer;">Retry Connection</button>
+            <div style="padding: 40px; text-align: center; font-family: 'Outfit', sans-serif; color: #475569;">
+              <div style="font-size: 48px; margin-bottom: 20px;">🏝️</div>
+              <h2 style="color: #0f172a; font-size: 1.25rem; margin-bottom: 8px; font-weight: 700;">Connection Interrupted</h2>
+              <p style="font-size: 0.875rem; color: #64748b; max-width: 280px; margin: 0 auto 20px;">${msg}</p>
+              <button onclick="location.reload()" style="padding: 12px 24px; background: #0f172a; color: white; border: none; border-radius: 99px; cursor: pointer; font-weight: 600;">Retry Connection</button>
             </div>
           `;
         }
@@ -42,7 +43,7 @@
     "react-dom": "https://esm.sh/react-dom@19.0.0",
     "react-dom/client": "https://esm.sh/react-dom@19.0.0/client",
     "lucide-react": "https://esm.sh/lucide-react@0.460.0?external=react",
-    "@google/genai": "https://esm.sh/@google/genai@1.3.0",
+    "@google/genai": "https://esm.sh/@google/genai@latest",
     "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/"
   }
@@ -53,6 +54,9 @@
       :root { --noosa-blue: #0ea5e9; --noosa-navy: #0f172a; --noosa-sand: #fdfcfb; }
       body { font-family: 'Outfit', sans-serif; background-color: var(--noosa-sand); color: var(--noosa-navy); margin: 0; padding: 0; }
       #root { min-height: 100vh; display: flex; flex-direction: column; }
+      .no-scrollbar::-webkit-scrollbar { display: none; }
+      .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      .glass { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
     </style>
   </head>
   <body>
@@ -62,7 +66,7 @@
           <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
         </div>
         <h2 style="font-family: 'Playfair Display', serif;" class="text-2xl font-bold text-slate-900 mb-2">Noosa Navigator</h2>
-        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Establishing Connection...</p>
+        <p class="text-slate-400 text-[10px] font-bold uppercase tracking-[0.3em] animate-pulse">Initializing Concierge...</p>
       </div>
     </div>
     <script type="module" src="./index.tsx"></script>

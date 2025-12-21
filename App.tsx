@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ChatInterface from './components/ChatInterface.tsx';
-import { Sunset, Key, Compass, Waves, Utensils, Trees, ShoppingBag, Navigation } from 'lucide-react';
+import { Sunset, Key, Compass, Waves, Trees, ShoppingBag, Navigation } from 'lucide-react';
 
 const App: React.FC = () => {
   const [sessionKey, setSessionKey] = useState(0);
@@ -8,57 +8,61 @@ const App: React.FC = () => {
   const [activeLocality, setActiveLocality] = useState<string>('All Noosa');
 
   useEffect(() => {
+    let mounted = true;
+
     const checkKeyStatus = async () => {
-      console.log("App: Checking Key Status...");
       try {
+        // Check if key is already in process.env (injected by bridge or environment)
         let envKeyAvailable = false;
         try {
           // @ts-ignore
           envKeyAvailable = !!(typeof process !== 'undefined' && process.env?.API_KEY);
-        } catch (e) {
-          envKeyAvailable = false;
-        }
+        } catch (e) {}
 
         const wasConnected = localStorage.getItem('noosa_concierge_connected') === 'true';
         
         if (window.aistudio) {
+          // Check if AI Studio platform already has a key selected
           const hasSelected = await Promise.race([
             window.aistudio.hasSelectedApiKey(),
-            new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 800))
+            new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1000))
           ]);
-          setHasApiKey(hasSelected || wasConnected || envKeyAvailable);
+          if (mounted) setHasApiKey(hasSelected || wasConnected || envKeyAvailable);
         } else {
-          setHasApiKey(envKeyAvailable || wasConnected);
+          if (mounted) setHasApiKey(envKeyAvailable || wasConnected);
         }
       } catch (err) {
         console.error("App: Auth check failed", err);
-        setHasApiKey(false);
+        if (mounted) setHasApiKey(false);
       }
     };
     
-    // Safety fallback: if we are still 'null' after 1.5s, force show the connect screen
+    // Safety fallback
     const fallback = setTimeout(() => {
-      if (hasApiKey === null) {
-        console.warn("App: Initialization timed out, forcing connect screen.");
-        setHasApiKey(false);
-      }
+      if (mounted && hasApiKey === null) setHasApiKey(false);
     }, 1500);
 
     checkKeyStatus();
-    return () => clearTimeout(fallback);
-  }, [hasApiKey]);
+    return () => {
+      mounted = false;
+      clearTimeout(fallback);
+    };
+  }, []);
 
   const handleSelectKey = async () => {
     if (window.aistudio) {
       try {
         await window.aistudio.openSelectKey();
         localStorage.setItem('noosa_concierge_connected', 'true');
+        // Assume success and proceed
         setHasApiKey(true);
       } catch (err) {
         console.error("Key selection failed", err);
-        setHasApiKey(true); // Proceed anyway, the API will fail later if actually missing
+        setHasApiKey(true); 
       }
     } else {
+      // If bridge isn't available, we just toggle the state so they can see the app 
+      // (it will fail later when trying to call Gemini if no key is present)
       localStorage.setItem('noosa_concierge_connected', 'true');
       setHasApiKey(true);
     }
@@ -68,7 +72,7 @@ const App: React.FC = () => {
     return (
       <div className="min-h-screen flex items-center justify-center bg-[#FDFCFB]">
         <div className="flex flex-col items-center">
-          <div className="w-12 h-12 border-4 border-sky-100 border-t-sky-600 rounded-full animate-spin"></div>
+          <div className="w-12 h-12 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin"></div>
           <span className="mt-6 text-slate-400 font-bold uppercase tracking-[0.3em] text-[9px]">Contacting Concierge...</span>
         </div>
       </div>
@@ -85,11 +89,11 @@ const App: React.FC = () => {
           </div>
         </div>
 
-        <h1 style={{fontFamily: 'Playfair Display, serif'}} className="text-4xl md:text-5xl font-bold text-slate-950 mb-6 tracking-tight">
-          Noosa Navigator
+        <h1 style={{fontFamily: 'Playfair Display, serif'}} className="text-4xl md:text-5xl font-bold text-slate-950 mb-6 tracking-tight leading-tight">
+          Noosa Awaits
         </h1>
         <p className="text-base md:text-lg text-slate-500 mb-10 leading-relaxed font-medium">
-          Your elite coastal concierge. Connect your Gemini API key to unlock real-time surf reports, dining reservations, and local secrets.
+          Connect your holiday concierge to get elite insights on surf, dining, and secret spots.
         </p>
         
         <div className="w-full space-y-4">
@@ -102,7 +106,7 @@ const App: React.FC = () => {
           </button>
           <p className="text-[10px] text-slate-400 mt-4 px-8 leading-relaxed">
             Requires a Google Gemini API Key. <br/>
-            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="underline hover:text-sky-600">Review Billing & Usage Docs</a>.
+            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="underline hover:text-sky-600">Learn about billing & keys</a>.
           </p>
         </div>
       </div>
@@ -118,7 +122,7 @@ const App: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FDFCFB]">
-      <header className="sticky top-0 z-50 glass border-b border-white/20 px-5 pt-4 pb-2 select-none shadow-sm">
+      <header className="sticky top-0 z-50 glass border-b border-slate-100 px-5 pt-4 pb-2 select-none shadow-sm">
         <div className="max-w-4xl mx-auto flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
@@ -131,7 +135,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <button 
-              onClick={() => { if (window.confirm("Start a new guide session?")) setSessionKey(k => k + 1); }}
+              onClick={() => { if (window.confirm("Start new session?")) setSessionKey(k => k + 1); }}
               className="p-2.5 rounded-full bg-white text-slate-400 border border-slate-100 shadow-sm active:scale-90 transition-transform"
             >
               <Navigation size={18} />
