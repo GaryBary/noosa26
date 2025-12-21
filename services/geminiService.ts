@@ -22,7 +22,7 @@ export const sendMessageToGemini = async (
     const apiKey = getApiKey();
     if (!apiKey) throw new Error("API_KEY_MISSING");
     
-    // Create new instance right before making an API call to ensure it uses the latest key
+    // Create new instance right before making an API call
     const ai = new GoogleGenAI({ apiKey });
     
     const formattedHistory: Content[] = history.map((msg) => ({
@@ -31,32 +31,21 @@ export const sendMessageToGemini = async (
     }));
 
     const contextualMessage = localityContext && localityContext !== 'All Noosa' 
-      ? `[Focus Locality: ${localityContext}] ${currentMessage}`
+      ? `[Locality Focus: ${localityContext}] ${currentMessage}`
       : currentMessage;
 
-    // Gemini 2.5 series models support both googleSearch and googleMaps grounding tools.
-    // Ensure exact camelCase for tool names as expected by the latest SDK versions.
+    // Use gemini-3-flash-preview for high performance and responsiveness.
+    // googleSearch is used for grounding as it reliably provides URLs for local venues.
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: [
         ...formattedHistory,
         { role: 'user', parts: [{ text: contextualMessage }] }
       ],
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
-        tools: [
-          { googleSearch: {} }, 
-          { googleMaps: {} }
-        ],
-        toolConfig: {
-          retrievalConfig: {
-            latLng: {
-              latitude: NOOSA_HEADS_COORDS.latitude,
-              longitude: NOOSA_HEADS_COORDS.longitude
-            }
-          }
-        },
-        temperature: 0.2,
+        tools: [{ googleSearch: {} }],
+        temperature: 0.15,
       },
     });
 
@@ -68,13 +57,13 @@ export const sendMessageToGemini = async (
   } catch (error: any) {
     console.error("Gemini Service Error:", error);
     
-    // Propagate API Key related errors back to the UI to trigger the key selection bridge
-    if (error.message?.includes("API_KEY_MISSING") || error.message?.includes("API_KEY_ERROR")) {
-      throw new Error("API_KEY_ERROR");
-    }
-    
-    // Handle the specific "Requested entity was not found" error as per instructions
-    if (error.message?.includes("Requested entity was not found")) {
+    // Check for API key errors to trigger key selection bridge
+    if (
+      error.message?.includes("API_KEY_MISSING") || 
+      error.message?.includes("API_KEY_ERROR") ||
+      error.message?.includes("403") ||
+      error.message?.includes("API key not valid")
+    ) {
       throw new Error("API_KEY_ERROR");
     }
 
@@ -83,11 +72,10 @@ export const sendMessageToGemini = async (
 };
 
 export const transcribeAudio = async (base64Audio: string): Promise<string> => {
-  console.log("Transcribe request for audio data...");
-  return "Tell me about the best surf spots in Noosa today.";
+  // Mock transcription for demonstration
+  return "What are the best dining spots on Hastings Street?";
 };
 
 export const generateSpeech = async (text: string): Promise<string | null> => {
-  console.log("Speech generation request...");
   return null;
 };

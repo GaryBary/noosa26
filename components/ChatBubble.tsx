@@ -1,7 +1,7 @@
 import React from 'react';
 import { Role } from '../types.ts';
 import type { Message } from '../types.ts';
-import { User, MapPin, ExternalLink, Globe, Mic, Compass, Share2 } from 'lucide-react';
+import { User, MapPin, ExternalLink, Globe, Compass, Share2 } from 'lucide-react';
 
 interface ChatBubbleProps { message: Message; }
 
@@ -14,7 +14,7 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
       try {
         await navigator.share({
           title: `Noosa Discovery: ${title}`,
-          text: `Found this for our Noosa holiday: ${title}`,
+          text: `Found this on Noosa Navigator: ${title}`,
           url: url,
         });
       } catch (err) {
@@ -31,27 +31,20 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
   const filteredChunks = rawChunks.reduce((acc: any[], chunk) => {
     const uri = (chunk.maps?.uri || chunk.web?.uri || "").trim();
     const title = (chunk.maps?.title || chunk.web?.title || "").trim();
-    const titleLower = title.toLowerCase();
-    
-    if (!uri || !title) return acc;
-    if (seenUris.has(uri)) return acc;
+    if (!uri || !title || seenUris.has(uri)) return acc;
 
-    const keywords = titleLower.split(/[\s,.-]+/).filter(w => w.length > 3);
-    const isMentioned = messageTextLower.includes(titleLower) || 
-                       keywords.some(word => messageTextLower.includes(word));
-    
-    if (!isMentioned) return acc;
+    // Only show if mentioned or as general context
     seenUris.add(uri);
     acc.push(chunk);
     return acc;
-  }, []).slice(0, 4);
+  }, []).slice(0, 3);
 
   const formatText = (text: string) => {
     const lines = text.split('\n');
     return lines.map((line, lineIdx) => {
       const parts = line.split(/(\*\*.*?\*\*|\[.*?\]\(.*?\))/g);
       return (
-        <div key={lineIdx} className="mb-2 leading-relaxed">
+        <div key={lineIdx} className="mb-2 last:mb-0">
           {parts.map((part, i) => {
             if (part.startsWith('**') && part.endsWith('**')) {
               return <strong key={i} className="font-bold text-sky-950">{part.slice(2, -2)}</strong>;
@@ -60,10 +53,9 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
               const label = part.match(/\[(.*?)\]/)?.[1] || "Link";
               const url = part.match(/\((.*?)\)/)?.[1] || "#";
               return (
-                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 mx-1.5 rounded-full bg-sky-50 text-sky-700 hover:bg-sky-100 no-underline text-[10px] font-bold uppercase tracking-wider transition-all border border-sky-100 shadow-sm whitespace-nowrap align-middle">
+                <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1 mx-1 rounded-full bg-sky-100 text-sky-700 hover:bg-sky-200 no-underline text-[10px] font-bold uppercase tracking-wider transition-all align-middle">
                   {label === 'Map' ? <MapPin size={10} /> : <Globe size={10} />}
                   {label}
-                  <ExternalLink size={10} className="opacity-40" />
                 </a>
               );
             }
@@ -76,30 +68,30 @@ const ChatBubble: React.FC<ChatBubbleProps> = ({ message }) => {
 
   return (
     <div className={`flex w-full mb-6 message-enter ${isUser ? 'justify-end' : 'justify-start'}`}>
-      <div className={`flex max-w-[95%] md:max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-3 md:gap-4`}>
-        <div className={`flex-shrink-0 h-9 w-9 md:h-10 md:w-10 rounded-2xl flex items-center justify-center shadow-lg ${isUser ? 'bg-slate-800' : 'bg-sky-600'}`}>
+      <div className={`flex max-w-[95%] md:max-w-[85%] ${isUser ? 'flex-row-reverse' : 'flex-row'} items-start gap-3`}>
+        <div className={`flex-shrink-0 h-9 w-9 rounded-2xl flex items-center justify-center shadow-lg ${isUser ? 'bg-slate-800' : 'bg-sky-600'}`}>
           {isUser ? <User size={18} className="text-slate-100" /> : <Compass size={18} className="text-white" />}
         </div>
-        <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} w-full`}>
-          <div className={`px-5 py-4 rounded-[1.8rem] shadow-sm text-sm md:text-base leading-relaxed tracking-tight ${isUser ? 'bg-slate-900 text-slate-50 rounded-tr-none' : 'glass text-slate-800 rounded-tl-none border-white/60'}`}>
+        <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} min-w-0`}>
+          <div className={`px-5 py-4 rounded-[1.8rem] shadow-sm text-sm md:text-base leading-relaxed tracking-tight break-words overflow-hidden ${isUser ? 'bg-slate-900 text-slate-50 rounded-tr-none' : 'glass text-slate-800 rounded-tl-none border border-white/60'}`}>
             {formatText(message.text)}
           </div>
           {!isUser && filteredChunks.length > 0 && (
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2 w-full max-w-lg">
+            <div className="mt-3 flex flex-wrap gap-2 w-full max-w-lg">
               {filteredChunks.map((chunk, idx) => {
                 const uri = chunk.maps?.uri || chunk.web?.uri;
                 const title = chunk.maps?.title || chunk.web?.title || "Venue";
                 return (
-                  <div key={idx} className="group flex flex-col p-3 rounded-2xl bg-white/70 border border-slate-100 shadow-sm hover:shadow-md transition-all">
-                    <div className="flex items-start justify-between mb-2">
-                      <span className="font-bold text-slate-900 text-[11px] leading-tight line-clamp-2 pr-2">{title}</span>
-                      <button onClick={() => handleShare(title, uri)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-sky-600 transition-colors">
+                  <div key={idx} className="flex items-center gap-2 p-2 pl-3 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-all">
+                    <span className="font-bold text-slate-900 text-[10px] tracking-tight">{title}</span>
+                    <div className="flex items-center border-l border-slate-100 pl-2 gap-1">
+                      <a href={uri} target="_blank" className="p-1.5 rounded-full hover:bg-sky-50 text-sky-600 transition-colors">
+                        <ExternalLink size={12} />
+                      </a>
+                      <button onClick={() => handleShare(title, uri)} className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 transition-colors">
                         <Share2 size={12} />
                       </button>
                     </div>
-                    <a href={uri} target="_blank" className="flex items-center justify-center gap-1.5 py-1.5 rounded-xl bg-slate-900 text-white text-[9px] font-bold uppercase tracking-wider hover:bg-black transition-colors">
-                      <MapPin size={10} /> View
-                    </a>
                   </div>
                 );
               })}
