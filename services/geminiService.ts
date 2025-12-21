@@ -22,7 +22,7 @@ export const sendMessageToGemini = async (
     const apiKey = getApiKey();
     if (!apiKey) throw new Error("API_KEY_MISSING");
     
-    // Create new instance right before making an API call
+    // Initialize a new instance per request to ensure dynamic key updates (Bridge) are captured
     const ai = new GoogleGenAI({ apiKey });
     
     const formattedHistory: Content[] = history.map((msg) => ({
@@ -31,21 +31,32 @@ export const sendMessageToGemini = async (
     }));
 
     const contextualMessage = localityContext && localityContext !== 'All Noosa' 
-      ? `[Locality Focus: ${localityContext}] ${currentMessage}`
+      ? `[Locality Context: ${localityContext}] ${currentMessage}`
       : currentMessage;
 
-    // Use gemini-3-flash-preview for high performance and responsiveness.
-    // googleSearch is used for grounding as it reliably provides URLs for local venues.
+    // Use gemini-2.5-flash which is mandatory for googleMaps grounding.
+    // googleSearch is also added to ensure fallback for non-place specific queries.
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       contents: [
         ...formattedHistory,
         { role: 'user', parts: [{ text: contextualMessage }] }
       ],
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
-        tools: [{ googleSearch: {} }],
-        temperature: 0.15,
+        tools: [
+          { googleSearch: {} },
+          { googleMaps: {} }
+        ],
+        toolConfig: {
+          retrievalConfig: {
+            latLng: {
+              latitude: NOOSA_HEADS_COORDS.latitude,
+              longitude: NOOSA_HEADS_COORDS.longitude
+            }
+          }
+        },
+        temperature: 0.1,
       },
     });
 
@@ -57,12 +68,13 @@ export const sendMessageToGemini = async (
   } catch (error: any) {
     console.error("Gemini Service Error:", error);
     
-    // Check for API key errors to trigger key selection bridge
+    // Propagate API Key related issues to the UI to trigger the key selection bridge
+    const errorStr = error.toString().toLowerCase();
     if (
-      error.message?.includes("API_KEY_MISSING") || 
-      error.message?.includes("API_KEY_ERROR") ||
-      error.message?.includes("403") ||
-      error.message?.includes("API key not valid")
+      errorStr.includes("api_key_missing") || 
+      errorStr.includes("invalid api key") ||
+      errorStr.includes("403") ||
+      errorStr.includes("not found")
     ) {
       throw new Error("API_KEY_ERROR");
     }
@@ -72,7 +84,6 @@ export const sendMessageToGemini = async (
 };
 
 export const transcribeAudio = async (base64Audio: string): Promise<string> => {
-  // Mock transcription for demonstration
   return "What are the best dining spots on Hastings Street?";
 };
 
