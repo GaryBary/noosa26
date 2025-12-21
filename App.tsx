@@ -12,7 +12,7 @@ const App: React.FC = () => {
 
     const checkKeyStatus = async () => {
       try {
-        // Check if key is already in process.env (injected by bridge or environment)
+        // Safe check for process.env.API_KEY
         let envKeyAvailable = false;
         try {
           // @ts-ignore
@@ -22,10 +22,9 @@ const App: React.FC = () => {
         const wasConnected = localStorage.getItem('noosa_concierge_connected') === 'true';
         
         if (window.aistudio) {
-          // Check if AI Studio platform already has a key selected
           const hasSelected = await Promise.race([
             window.aistudio.hasSelectedApiKey(),
-            new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 1000))
+            new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 800))
           ]);
           if (mounted) setHasApiKey(hasSelected || wasConnected || envKeyAvailable);
         } else {
@@ -37,12 +36,13 @@ const App: React.FC = () => {
       }
     };
     
-    // Safety fallback
+    // Safety fallback: ensure we don't stay in 'Initializing' forever
     const fallback = setTimeout(() => {
       if (mounted && hasApiKey === null) setHasApiKey(false);
-    }, 1500);
+    }, 1200);
 
     checkKeyStatus();
+
     return () => {
       mounted = false;
       clearTimeout(fallback);
@@ -54,15 +54,12 @@ const App: React.FC = () => {
       try {
         await window.aistudio.openSelectKey();
         localStorage.setItem('noosa_concierge_connected', 'true');
-        // Assume success and proceed
         setHasApiKey(true);
       } catch (err) {
         console.error("Key selection failed", err);
         setHasApiKey(true); 
       }
     } else {
-      // If bridge isn't available, we just toggle the state so they can see the app 
-      // (it will fail later when trying to call Gemini if no key is present)
       localStorage.setItem('noosa_concierge_connected', 'true');
       setHasApiKey(true);
     }
@@ -93,7 +90,7 @@ const App: React.FC = () => {
           Noosa Awaits
         </h1>
         <p className="text-base md:text-lg text-slate-500 mb-10 leading-relaxed font-medium">
-          Connect your holiday concierge to get elite insights on surf, dining, and secret spots.
+          Unlock your elite coastal concierge. Connect your API key to access real-time local expertise.
         </p>
         
         <div className="w-full space-y-4">
@@ -102,11 +99,11 @@ const App: React.FC = () => {
             className="w-full group px-8 py-5 bg-slate-900 text-white text-base font-bold rounded-full transition-all shadow-xl hover:shadow-sky-200 active:scale-95 flex items-center justify-center gap-3"
           >
             <Key size={18} className="text-sky-300" />
-            <span>Connect Concierge</span>
+            <span>Connect to Noosa Concierge</span>
           </button>
           <p className="text-[10px] text-slate-400 mt-4 px-8 leading-relaxed">
             Requires a Google Gemini API Key. <br/>
-            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="underline hover:text-sky-600">Learn about billing & keys</a>.
+            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="underline hover:text-sky-600">Review Usage & Billing Docs</a>.
           </p>
         </div>
       </div>
@@ -135,7 +132,7 @@ const App: React.FC = () => {
               </div>
             </div>
             <button 
-              onClick={() => { if (window.confirm("Start new session?")) setSessionKey(k => k + 1); }}
+              onClick={() => { if (window.confirm("Restart concierge session?")) setSessionKey(k => k + 1); }}
               className="p-2.5 rounded-full bg-white text-slate-400 border border-slate-100 shadow-sm active:scale-90 transition-transform"
             >
               <Navigation size={18} />
@@ -146,7 +143,7 @@ const App: React.FC = () => {
             <button 
               onClick={() => setActiveLocality('All Noosa')}
               className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                activeLocality === 'All Noosa' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-400 border-slate-100 hover:border-sky-200'
+                activeLocality === 'All Noosa' ? 'bg-slate-900 text-white border-slate-900' : 'bg-white text-slate-400 border-slate-100 hover:border-sky-200 shadow-sm'
               }`}
             >
               All Noosa
@@ -156,7 +153,7 @@ const App: React.FC = () => {
                 key={region.name}
                 onClick={() => setActiveLocality(region.name)}
                 className={`flex-shrink-0 flex items-center gap-2 px-4 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all border ${
-                  activeLocality === region.name ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-100' : 'bg-white text-slate-400 border-slate-100 hover:border-sky-200'
+                  activeLocality === region.name ? 'bg-sky-600 text-white border-sky-600 shadow-md shadow-sky-100' : 'bg-white text-slate-400 border-slate-100 hover:border-sky-200 shadow-sm'
                 }`}
               >
                 {region.icon}
