@@ -1,7 +1,7 @@
 import { GoogleGenAI, Content } from "@google/genai";
 import { Role } from '../types.ts';
 import type { Message } from '../types.ts';
-import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants.ts';
+import { SYSTEM_INSTRUCTION } from '../constants.ts';
 
 const getApiKey = () => {
   return process.env.API_KEY || "";
@@ -24,31 +24,20 @@ export const sendMessageToGemini = async (
       parts: [{ text: msg.text }],
     }));
 
-    const contextualMessage = localityContext && localityContext !== 'All Noosa' 
+    const contextualMessage = localityContext && localityContext !== 'ALL NOOSA' 
       ? `[Locality Context: ${localityContext}] ${currentMessage}`
       : currentMessage;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: 'gemini-3-flash-preview',
       contents: [
         ...formattedHistory,
         { role: 'user', parts: [{ text: contextualMessage }] }
       ],
       config: {
         systemInstruction: SYSTEM_INSTRUCTION,
-        tools: [
-          { googleSearch: {} },
-          { googleMaps: {} }
-        ],
-        toolConfig: {
-          retrievalConfig: {
-            latLng: {
-              latitude: NOOSA_HEADS_COORDS.latitude,
-              longitude: NOOSA_HEADS_COORDS.longitude
-            }
-          }
-        },
-        temperature: 0.1,
+        tools: [{ googleSearch: {} }],
+        temperature: 0.2,
       },
     });
 
@@ -60,11 +49,7 @@ export const sendMessageToGemini = async (
   } catch (error: any) {
     console.error("Gemini Service Error:", error);
     const errorStr = error.toString().toLowerCase();
-    if (
-      errorStr.includes("api_key") || 
-      errorStr.includes("403") ||
-      errorStr.includes("not found")
-    ) {
+    if (errorStr.includes("api_key") || errorStr.includes("403") || errorStr.includes("not found")) {
       throw new Error("API_KEY_ERROR");
     }
     throw error;
@@ -72,7 +57,7 @@ export const sendMessageToGemini = async (
 };
 
 export const transcribeAudio = async (base64Audio: string): Promise<string> => {
-  return "What are the best dining spots on Hastings Street?";
+  return "How are things in Noosa today?";
 };
 
 export const generateSpeech = async (text: string): Promise<string | null> => {
