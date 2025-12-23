@@ -1,7 +1,7 @@
 {
-  "name": "Noosa Navigator",
-  "short_name": "Noosa",
-  "description": "Elite Coastal Concierge for your Noosa Holiday.",
+  "name": "Noosa Guru",
+  "short_name": "Noosa Guru",
+  "description": "Elite Coastal Expert for your Noosa Region Holiday.",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#fdfcfb",
