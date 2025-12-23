@@ -4,12 +4,7 @@ import type { Message } from '../types.ts';
 import { SYSTEM_INSTRUCTION, NOOSA_HEADS_COORDS } from '../constants.ts';
 
 const getApiKey = () => {
-  try {
-    // @ts-ignore
-    return (typeof process !== 'undefined' && process.env?.API_KEY) || "";
-  } catch (e) {
-    return "";
-  }
+  return process.env.API_KEY || "";
 };
 
 export const sendMessageToGemini = async (
@@ -22,7 +17,6 @@ export const sendMessageToGemini = async (
     const apiKey = getApiKey();
     if (!apiKey) throw new Error("API_KEY_MISSING");
     
-    // Initialize a new instance per request to ensure dynamic key updates (Bridge) are captured
     const ai = new GoogleGenAI({ apiKey });
     
     const formattedHistory: Content[] = history.map((msg) => ({
@@ -34,8 +28,6 @@ export const sendMessageToGemini = async (
       ? `[Locality Context: ${localityContext}] ${currentMessage}`
       : currentMessage;
 
-    // Use gemini-2.5-flash which is mandatory for googleMaps grounding.
-    // googleSearch is also added to ensure fallback for non-place specific queries.
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: [
@@ -67,18 +59,14 @@ export const sendMessageToGemini = async (
 
   } catch (error: any) {
     console.error("Gemini Service Error:", error);
-    
-    // Propagate API Key related issues to the UI to trigger the key selection bridge
     const errorStr = error.toString().toLowerCase();
     if (
-      errorStr.includes("api_key_missing") || 
-      errorStr.includes("invalid api key") ||
+      errorStr.includes("api_key") || 
       errorStr.includes("403") ||
       errorStr.includes("not found")
     ) {
       throw new Error("API_KEY_ERROR");
     }
-
     throw error;
   }
 };
